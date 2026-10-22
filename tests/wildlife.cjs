@@ -72,5 +72,16 @@ for(const selected of ['leo','gus'])for(const kind of ['turtle','crab','snake','
  player.x=100;player.star=0;for(let frame=0;frame<72;frame++)updateEnemies(.05,416);check(e.sleep===0&&e.alive&&e.age>restingAge,'animal wakes and resumes patrol');
  player.x=e.x-12;player.y=384;player.inv=0;player.vy=0;const beforeWake=lives;updateEnemies(0,416);check(lives===beforeWake-1,'normal contact returns after waking');
 }
+for(const selected of ['leo','gus']){
+ e=reset('crab',selected);player.x=60;enemies=[];collectItem({kind:'feather'});
+ check(player.cape&&player.flight===6&&notice.text.includes('PARAPENTE'),'paraglider pickup equips six seconds');
+ player.on=false;player.y=250;player.vy=80;keys.Space=true;update(.025);check(player.flight<6&&player.vy<80,'holding jump deploys flight');
+ const usedFlight=player.flight;keys.Space=false;update(.025);check(player.flight===usedFlight,'release stops consuming flight');
+ state='pause';update(.1);check(player.flight===usedFlight,'pause preserves flight');state='play';
+ player.on=false;player.y=416-player.h-1;player.vy=100;update(.025);check(player.on&&player.flight===6,'landing refills flight');
+ player.on=false;player.y=50;player.vy=-200;keys.Space=true;update(.025);check(player.y>=65+47*player.h/32,'open canopy stays below HUD');
+ player.on=false;player.y=250;player.vy=0;player.jumpHeld=true;player.flight=.01;update(.025);check(player.flight===0,'flight energy cannot be negative');
+ player.flight=2.3;saveGame(false);continueGame();check(player.cape&&player.flight===2.3,'legacy cape save retains paraglider and energy');
+}
 console.log(checks+' wildlife checks passed.');
 `,sandbox);

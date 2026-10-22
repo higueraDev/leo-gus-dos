@@ -18,14 +18,14 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 - Flechas o A/D: movimiento.
 - Espacio, flecha arriba o W: salto. Suelta y vuelve a pulsar para doble salto.
-- Con capa: mantén salto para volar; la energía se recarga al aterrizar.
+- Con parapente: mantén salto en el aire para desplegarlo y volar durante un máximo de 6 segundos; la energía se recarga al aterrizar.
 - P: pausa; R: reinicia la partida.
 - Controles táctiles en móvil, también flotantes en pantalla completa.
 - El botón de sonido controla música y efectos.
 
 ## Características
 
-Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), pluma con capa y hongo verde.
+Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), parapente con mochila y arnés y hongo verde.
 
 ## Archivos
 
