@@ -9,3 +9,5 @@
 .characters button{display:flex;align-items:center;gap:12px;min-height:70px}.hero-portrait{width:40px;height:60px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(2px 3px 0 #0b1b24a0)}.hero-info{display:block}.characters .chosen .hero-portrait{filter:drop-shadow(0 0 5px #c1f46340)}@media(max-width:720px){.characters button{gap:8px;min-height:60px}.hero-portrait{width:32px;height:48px}}
 
 .characters [data-hero="gus"] .hero-portrait{transform:scaleY(1.1875);transform-origin:50% 100%}
+
+.brand-dev{color:var(--lime);font-weight:700}
