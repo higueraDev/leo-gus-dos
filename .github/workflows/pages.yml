@@ -29,7 +29,7 @@ jobs:
       - name: Preparar archivos del juego
         run: |
           mkdir _site
-          cp index.html style.css game.js install.js sw.js manifest.webmanifest icon-192.png icon-512.png higuera-logo.png .nojekyll _site/
+          cp index.html style.css game.js terminal.js install.js sw.js manifest.webmanifest icon-192.png icon-512.png higuera-logo.png .nojekyll _site/
       - name: Subir sitio
         uses: actions/upload-pages-artifact@v3
         with:
