@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus, monedas, ladrillos rompibles, tortugas y caparazones, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), pluma con capa y hongo verde.
+Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), pluma con capa y hongo verde.
 
 ## Archivos
 
@@ -45,10 +45,16 @@ URL: https://higueradev.github.io/leo-gus-dos/
 
 El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despliegue incluye únicamente los archivos del juego.
 
-Enemigos regionales adicionales: cangrejos en BCS (desplazamiento lateral), serpientes de cascabel en Baja California (avance con pausas) y alacranes en Chihuahua (ráfagas de velocidad al acercarte). Se vencen saltando encima o con un caparazón. En modo explorador, se observan sin dañarlos. Las tortugas mantienen su mecánica de caparazón.
+Fauna: una tortuga de recorrido lento en la primera zona costera de BCS, cangrejos en BCS, serpientes de cascabel en Baja California y alacranes en Chihuahua. Los animales patrullan espacios delimitados lejos de los bordes de precipicios y de las zonas de aterrizaje bajo los ladrillos; hacen pausas y no persiguen al jugador. La serpiente agita la cola antes de avanzar. Son comportamientos de juego simplificados.
+
+Saltar sobre un animal produce un rebote suave sin dañarlo. Un choque lateral quita un corazón, separa al jugador sin empujarlo al precipicio y concede 1.6 segundos de protección; los poderes se conservan. En modo explorador se atraviesa y observa la fauna sin daño y cada primera observación paga 5 monedas. No hay eliminaciones, patadas ni caparazones como proyectiles. Los caparazones de partidas anteriores vuelven a ser tortugas conservando sus observaciones.
 
 Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (BCS, 2/4), corrido fronterizo (BC, 3/4) y polca chihuahuense (Chihuahua, 2/4). Cada nivel cambia la melodía, el tempo y el acompañamiento. No requieren descargar audio.
 
 Guardado: botón GUARDAR, opción en pausa y guardado automático cada 5 segundos, al pausar y al ocultar la página. CONTINUAR restaura nivel, personaje, posición, enemigos, bloques, monedas, tiempo, vidas y poderes. Una partida por navegador y dispositivo mediante localStorage, también sin conexión. Nueva partida reemplaza el guardado; terminar la aventura o perder todas las vidas lo elimina.
 
-Puntaje único en monedas: cada moneda recogida suma 1; observar por primera vez a cada animal paga 5 monedas. La bandera paga de 1 a 50 monedas según la altura y el tiempo restante da 1 moneda por cada 10 segundos completos. Romper bloques, tomar poderes y vencer enemigos no genera monedas. Las vidas se muestran con corazones rojos grandes. Los guardados anteriores conservan sus monedas y progreso; los puntos antiguos se descartan.
+Puntaje único en monedas: cada moneda recogida suma 1; observar por primera vez a cada animal paga 5 monedas. La bandera paga de 1 a 50 monedas según la altura y el tiempo restante da 1 moneda por cada 10 segundos completos. Romper bloques, tomar poderes y tocar animales no genera monedas. Las vidas se muestran con corazones rojos grandes. Los guardados anteriores conservan sus monedas y progreso; los puntos antiguos se descartan.
+
+## Validación de fauna
+
+Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, inmunidad, pago por observación, migración de caparazones y patrullas de un minuto a 30, 60 y 120 FPS. Son pruebas de lógica con navegador y audio simulados.
