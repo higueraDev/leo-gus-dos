@@ -135,7 +135,59 @@ function drawTurtle(e){
 }
 function cloud(x,y){rect(x,y,72,20,'#e5f1da');rect(x+12,y-12,24,14,'#e5f1da');rect(x+32,y-20,24,22,'#e5f1da');rect(x+8,y+20,65,5,'#bddbd2')}
 function mountain(x,y,w,h){ctx.fillStyle='#87ae9c';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w/2,y-h);ctx.lineTo(x+w,y);ctx.fill();ctx.fillStyle='#9cc0a6';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w/2,y-h);ctx.lineTo(x+w/2,y);ctx.fill()}
-function draw(){rect(0,0,960,480,level===2?'#a2b5c8':'#84bccc');for(let i=-1;i<8;i++){let x=i*245-(camera*.16)%245;mountain(x,416,300,155);cloud(x+60,90+(i%3)*28)}for(let i=-1;i<16;i++){const x=i*115-(camera*.35)%115;rect(x,392,90,24,'#547f61');rect(x+15,379,55,15,'#547f61');rect(x+32,368,24,14,'#547f61')}
+function drawMeadowBackground(){
+ // Distant scenery moves slowly; all decoration remains behind solid platforms.
+ rect(0,0,960,480,'#84bccc');
+ const hillStart=Math.floor(camera*.12/260)-1;
+ for(let i=hillStart;i<hillStart+7;i++){
+  const x=i*260-camera*.12,h=[100,160,125,185,140][((i%5)+5)%5];
+  mountain(x,416,330,h);
+ }
+ const cloudStart=Math.floor(camera*.08/240)-1;
+ for(let i=cloudStart;i<cloudStart+6;i++){
+  const variant=((i%3)+3)%3,scale=[.65,1,.8][variant];
+  ctx.save();ctx.translate(i*240-camera*.08,85+variant*35);ctx.scale(scale,scale);cloud(0,0);ctx.restore();
+ }
+ // Rounded broadleaf trees and slender pines alternate along the middle layer.
+ const treeStart=Math.floor(camera*.3/195)-1;
+ for(let i=treeStart;i<treeStart+8;i++){
+  const x=i*195-camera*.3+60,variant=((i%4)+4)%4;
+  if(variant===1||variant===3){
+   rect(x+18,343,8,73,'#799887');
+   capeShape([[x+22,284],[x-5,345],[x+49,345]],'#729e88');
+   capeShape([[x+22,310],[x-15,376],[x+59,376]],'#6d9780');
+   capeShape([[x+22,337],[x-22,399],[x+66,399]],'#658e75');
+  }else{
+   const tall=variant===2?20:0;
+   rect(x+20,353-tall,11,63+tall,'#8c9774');rect(x+28,369-tall,14,6,'#8c9774');
+   rect(x-3,316-tall,60,47,'#7ca78a');rect(x+8,301-tall,38,22,'#8cb398');
+   rect(x-12,335-tall,78,25,'#7ca78a');rect(x+1,352-tall,56,14,'#709b7f');
+   rect(x+10,310-tall,22,7,'#9bbb9c');
+  }
+ }
+ const bushStart=Math.floor(camera*.48/145)-1;
+ for(let i=bushStart;i<bushStart+10;i++){
+  const x=i*145-camera*.48,variant=((i%3)+3)%3;
+  rect(x,396,60+variant*9,20,'#6f9972');rect(x+9,383-variant*3,37,17+variant*3,'#79a47e');
+  if(variant===0){rect(x+13,393,3,3,'#c8b7a1');rect(x+34,389,3,3,'#c8b7a1');}
+ }
+ // Small plants, stones and decorative mushrooms occupy the nearest background layer.
+ const detailStart=Math.floor(camera*.7/93)-1;
+ for(let i=detailStart;i<detailStart+14;i++){
+  const x=i*93-camera*.7+25,variant=((i%5)+5)%5;
+  if(variant===0||variant===3){
+   for(let j=0;j<3;j++){const fx=x+j*13,fy=402-(j%2)*6;rect(fx,fy,2,14,'#64875d');rect(fx-3,fy+6,4,2,'#64875d');rect(fx-3,fy-3,8,3,variant===0?'#d8c88c':'#c0b2c5');rect(fx-1,fy-5,3,7,variant===0?'#d8c88c':'#c0b2c5');rect(fx-1,fy-2,3,2,'#eee1b1');}
+  }else if(variant===1){
+   rect(x+1,408,22,8,'#94a496');rect(x+5,402,14,6,'#a6b1a2');rect(x+7,404,7,2,'#c0c8b1');
+  }else if(variant===2){
+   rect(x+5,405,5,11,'#c6c2a1');rect(x,399,16,8,'#b49a87');rect(x+3,396,10,4,'#b49a87');rect(x+3,400,3,3,'#ded5b4');rect(x+11,402,3,2,'#ded5b4');
+  }else{
+   rect(x+6,403,2,13,'#71986b');rect(x,409,6,2,'#71986b');rect(x+8,406,6,2,'#71986b');
+  }
+ }
+}
+
+function draw(){if(level===1)drawMeadowBackground();else{rect(0,0,960,480,level===2?'#a2b5c8':'#84bccc');for(let i=-1;i<8;i++){let x=i*245-(camera*.16)%245;mountain(x,416,300,155);cloud(x+60,90+(i%3)*28)}for(let i=-1;i<16;i++){const x=i*115-(camera*.35)%115;rect(x,392,90,24,'#547f61');rect(x+15,379,55,15,'#547f61');rect(x+32,368,24,14,'#547f61')}}
 ctx.save();ctx.translate(-Math.round(camera),0);for(const p of platforms){if(p.x+p.w<camera||p.x>camera+960)continue;if(p.type==='ground'){rect(p.x,p.y,p.w,p.h,'#a76e47');rect(p.x,p.y,p.w,9,'#578746');rect(p.x,p.y,p.w,3,'#97b65d');for(let x=p.x+6;x<p.x+p.w;x+=32){rect(x,p.y+19,13,5,'#c18a57');rect(x+17,p.y+43,8,6,'#704d38')}}else if(p.type==='brick'){rect(p.x,p.y,p.w,p.h,'#ad7952');for(let x=p.x;x<p.x+p.w;x+=32){rect(x,p.y,32,2,'#e0ad72');rect(x,p.y+12,32,2,'#654733');rect(x,p.y,2,12,'#654733');rect(x+16,p.y+12,2,12,'#654733')}}else{rect(p.x,p.y,32,32,p.used?'#8a7957':'#e7b74e');rect(p.x+3,p.y+3,26,2,'#ffe29a');rect(p.x+3,p.y+28,26,3,'#a77432');ctx.fillStyle=p.used?'#a99b7e':'#80542a';ctx.font='bold 24px monospace';ctx.fillText(p.used?'·':'?',p.x+8,p.y+25)}}
 for(const c of gold)if(!c.taken){const w=6+Math.abs(Math.sin(performance.now()/200+c.x))*5;rect(c.x-w/2,c.y-10,w,19,'#e9a93d');rect(c.x-w/2+2,c.y-8,3,14,'#ffe5a0')}
 for(const item of items)drawItem(item);for(const e of enemies)if(e.alive)drawTurtle(e);
