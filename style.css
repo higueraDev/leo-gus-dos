@@ -11,3 +11,5 @@
 .characters [data-hero="gus"] .hero-portrait{transform:scaleY(1.1875);transform-origin:50% 100%}
 
 .brand-dev{color:var(--lime);font-weight:700}
+
+.brand{display:inline-flex;align-items:center}.brand-logo{width:38px;height:38px;object-fit:contain;margin-right:10px;flex-shrink:0}
