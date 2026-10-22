@@ -1,4 +1,4 @@
-const CACHE='dos-arcade-v15';
+const CACHE='dos-arcade-v16';
 const ASSETS=['./','./index.html','./style.css','./game.js','./install.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(names=>Promise.all(names.filter(n=>n.startsWith('dos-arcade-')&&n!==CACHE).map(n=>caches.delete(n)))).then(()=>self.clients.claim()));});
