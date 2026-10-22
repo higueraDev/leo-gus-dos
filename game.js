@@ -112,7 +112,7 @@ function drawFlyingHero(){
 }
 function drawPlayer(){
  ctx.save();ctx.translate(player.x+player.w/2,player.y);ctx.scale(player.facing===-1?-1:1,player.h/32);ctx.translate(-12,0);
- if(player.star>0){ctx.shadowColor=['#ffdd71','#a7ffcf','#e7adff'][Math.floor(clock*12)%3];ctx.shadowBlur=14;}
+ if(player.star>0){const color=['#ffdd71','#a7ffcf','#e7adff'][Math.floor(clock*12)%3],offset=Math.floor(clock*8)%2*3;rect(-5,6+offset,3,5,color);rect(26,21-offset,3,5,color);rect(5+offset,-5,5,3,color);rect(15-offset,34,5,3,color);}
  const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&state==='play';
  if(player.cape)drawCape(flying);
  if(flying)drawFlyingHero();else sprite(playerPose(),0,0,2,hero==='gus');
