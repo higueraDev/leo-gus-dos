@@ -37,4 +37,10 @@ Al cambiar archivos del juego, incrementa el identificador `CACHE` en `sw.js` pa
 
 ## GitHub Pages
 
-Publica la rama `main`, carpeta `/ (root)`, desde Settings → Pages → Deploy from a branch. El manifiesto usa rutas relativas para funcionar bajo `/mario-luigi-dos/`.
+El workflow `.github/workflows/pages.yml` publica automáticamente cada push a `main`. También puede ejecutarse manualmente desde Actions.
+
+En Settings → Pages, selecciona **GitHub Actions** como fuente de publicación.
+
+URL: https://higueradev.github.io/mario-luigi-dos/
+
+El manifiesto usa rutas relativas para funcionar bajo `/mario-luigi-dos/`. El despliegue incluye únicamente los archivos del juego.
