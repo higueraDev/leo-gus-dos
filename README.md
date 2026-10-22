@@ -1,8 +1,8 @@
-# Mario & Luigi · DOS Arcade
+# Leo & Gus · DOS Arcade
 
 Juego web de plataformas inspirado en los clásicos de MS-DOS. Recreación fan no afiliada a Nintendo.
 
-**Jugar:** https://mario-luigi-dos-arcade-k7q.upbeatpeony4.chatgpt.site
+**Jugar:** https://higueradev.github.io/mario-luigi-dos/
 
 ## Ejecutar localmente
 
@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-Tres niveles, selección de Mario o Luigi, monedas, ladrillos rompibles, tortugas y caparazones, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, estrella, pluma con capa y hongo verde.
+Tres niveles, selección de Leo o Gus, monedas, ladrillos rompibles, tortugas y caparazones, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, estrella, pluma con capa y hongo verde.
 
 ## Archivos
 

@@ -1,9 +1,9 @@
 {
   "id": "./",
-  "name": "Mario & Luigi · DOS Arcade",
+  "name": "Leo & Gus · DOS Arcade",
   "short_name": "DOS Arcade",
   "lang": "es",
-  "description": "Aventura retro de plataformas. Juega también sin conexión.",
+  "description": "Aventura retro de plataformas con Leo y Gus. Juega también sin conexión.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
