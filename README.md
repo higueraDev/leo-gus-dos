@@ -48,3 +48,5 @@ El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despli
 Enemigos regionales adicionales: cangrejos en BCS (desplazamiento lateral), serpientes de cascabel en Baja California (avance con pausas) y alacranes en Chihuahua (ráfagas de velocidad al acercarte). Se vencen saltando encima, con un caparazón o con la estrella. Las tortugas mantienen su mecánica de caparazón.
 
 Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (BCS, 2/4), corrido fronterizo (BC, 3/4) y polca chihuahuense (Chihuahua, 2/4). Cada nivel cambia la melodía, el tempo y el acompañamiento. No requieren descargar audio.
+
+Guardado: botón GUARDAR, opción en pausa y guardado automático cada 5 segundos, al pausar y al ocultar la página. CONTINUAR restaura nivel, personaje, posición, enemigos, bloques, monedas, puntos, tiempo, vidas y poderes. Una partida por navegador y dispositivo mediante localStorage, también sin conexión. Nueva partida reemplaza el guardado; terminar la aventura o perder todas las vidas lo elimina.
