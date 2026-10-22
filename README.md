@@ -2,7 +2,7 @@
 
 Juego web de plataformas inspirado en los clásicos de MS-DOS. Recreación fan no afiliada a Nintendo.
 
-**Jugar:** https://higueradev.github.io/mario-luigi-dos/
+**Jugar:** https://higueradev.github.io/leo-gus-dos/
 
 ## Ejecutar localmente
 
@@ -41,6 +41,6 @@ El workflow `.github/workflows/pages.yml` publica automáticamente cada push a `
 
 En Settings → Pages, selecciona **GitHub Actions** como fuente de publicación.
 
-URL: https://higueradev.github.io/mario-luigi-dos/
+URL: https://higueradev.github.io/leo-gus-dos/
 
-El manifiesto usa rutas relativas para funcionar bajo `/mario-luigi-dos/`. El despliegue incluye únicamente los archivos del juego.
+El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despliegue incluye únicamente los archivos del juego.
