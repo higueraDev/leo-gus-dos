@@ -34,3 +34,7 @@ Tres niveles, selección de Mario o Luigi, monedas, ladrillos rompibles, tortuga
 - `install.js`, `manifest.webmanifest`, `sw.js`: instalación y caché sin conexión.
 
 Al cambiar archivos del juego, incrementa el identificador `CACHE` en `sw.js` para renovar los recursos sin conexión.
+
+## GitHub Pages
+
+Publica la rama `main`, carpeta `/ (root)`, desde Settings → Pages → Deploy from a branch. El manifiesto usa rutas relativas para funcionar bajo `/mario-luigi-dos/`.

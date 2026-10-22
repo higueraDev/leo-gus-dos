@@ -1,1 +1,26 @@
-{"id": "/", "name": "Mario & Luigi · DOS Arcade", "short_name": "DOS Arcade", "lang": "es", "description": "Aventura retro de plataformas. Juega también sin conexión.", "start_url": "/", "scope": "/", "display": "standalone", "background_color": "#131612", "theme_color": "#131612", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}
+{
+  "id": "./",
+  "name": "Mario & Luigi · DOS Arcade",
+  "short_name": "DOS Arcade",
+  "lang": "es",
+  "description": "Aventura retro de plataformas. Juega también sin conexión.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#131612",
+  "theme_color": "#131612",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
