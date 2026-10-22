@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), pluma con capa y hongo verde.
+Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), pluma con capa y hongo verde.
 
 ## Archivos
 
