@@ -16,3 +16,5 @@ main,.arcade,.screen{min-width:0;max-width:100%}.screen canvas{max-width:100%;ob
 .screen>canvas{position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center}
 .screen.is-playing:not(.immersive){width:100%;height:auto;min-height:0;aspect-ratio:2/1}
 @media(max-width:720px){.arcade{width:100%;overflow:hidden}.screen:not(.immersive){width:100%;max-width:100%}.screen.is-playing:not(.immersive){min-height:0;aspect-ratio:2/1}.screen:not(.immersive) #pause{top:5px;right:5px;padding:4px 8px}}
+
+.intro-compact{padding:8px 0 0}.compact-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.intro-compact h1{margin:8px 0 0;font-size:38px}.compact-route{font-size:10px;color:#aaa;margin:0}.intro-compact .launch-line{margin:8px 0 12px}.install-row{padding-top:10px}@media(max-width:720px){.intro-compact h1{font-size:30px}.compact-heading{align-items:baseline;gap:8px}.compact-route{font-size:8px}.intro-compact .launch-line{margin:6px 0 10px;font-size:10px}}
