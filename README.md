@@ -44,3 +44,5 @@ En Settings → Pages, selecciona **GitHub Actions** como fuente de publicación
 URL: https://higueradev.github.io/leo-gus-dos/
 
 El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despliegue incluye únicamente los archivos del juego.
+
+Enemigos regionales adicionales: cangrejos en BCS (desplazamiento lateral), serpientes de cascabel en Baja California (avance con pausas) y alacranes en Chihuahua (ráfagas de velocidad al acercarte). Se vencen saltando encima, con un caparazón o con la estrella. Las tortugas mantienen su mecánica de caparazón.
