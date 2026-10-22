@@ -61,5 +61,16 @@ for(const fps of [30,60,120])for(const stage of [1,2,3]){
 e=reset('snake');e.age=1.6;regionalMovement(e,0);check(e.alert&&e.vx===0,'snake warns before moving');e.age=2;regionalMovement(e,0);check(!e.alert&&e.vx>0,'snake moves after warning');
 e=reset('scorpion');e.age=.3;player.x=310;regionalMovement(e,0);const nearSpeed=e.vx;player.x=2000;regionalMovement(e,0);check(e.vx===nearSpeed,'scorpion does not chase player');
 for(const kind of ['turtle','crab','snake','scorpion']){e=reset(kind);e.age=kind==='turtle'?2.5:kind==='crab'?1.5:1;regionalMovement(e,0);check(e.vx===0,'recognizable rest phase for '+kind);}
+for(const selected of ['leo','gus'])for(const kind of ['turtle','crab','snake','scorpion']){
+ e=reset(kind,selected);player.y=e.y-player.h+1;player.vy=100;updateEnemies(0,e.y);
+ check(e.sleep===4&&e.vx===0&&e.alive&&coins===0,'landing sleeps animal without coins or damage');
+ const restingX=e.x,restingAge=e.age;player.x=298;player.y=384;player.vy=0;player.inv=0;
+ for(let frame=0;frame<20;frame++)updateEnemies(.025,416);check(Math.abs(e.sleep-3.5)<.00001&&e.x===restingX&&e.age===restingAge&&lives===3,'sleep pauses movement and prevents contact damage');
+ state='pause';update(.5);check(Math.abs(e.sleep-3.5)<.00001,'pause freezes sleep timer');state='play';
+ coins=23;e.observed=true;saveGame(false);continueGame();e=enemies[0];check(Math.abs(e.sleep-3.5)<.00001&&e.observed&&coins===23,'save preserves sleep and discovery');
+ player.star=12;player.examine=0;e.observed=false;e.explorerNearby=false;updateEnemies(0,416);check(Math.abs(e.sleep-3.5)<.00001&&e.observed&&coins===28,'sleeping animals can be observed');
+ player.x=100;player.star=0;for(let frame=0;frame<72;frame++)updateEnemies(.05,416);check(e.sleep===0&&e.alive&&e.age>restingAge,'animal wakes and resumes patrol');
+ player.x=e.x-12;player.y=384;player.inv=0;player.vy=0;const beforeWake=lives;updateEnemies(0,416);check(lives===beforeWake-1,'normal contact returns after waking');
+}
 console.log(checks+' wildlife checks passed.');
 `,sandbox);

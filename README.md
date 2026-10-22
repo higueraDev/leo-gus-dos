@@ -47,7 +47,7 @@ El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despli
 
 Fauna: una tortuga de recorrido lento en la primera zona costera de BCS, cangrejos en BCS, serpientes de cascabel en Baja California y alacranes en Chihuahua. Los animales patrullan espacios delimitados lejos de los bordes de precipicios y de las zonas de aterrizaje bajo los ladrillos; hacen pausas y no persiguen al jugador. La serpiente agita la cola antes de avanzar. Son comportamientos de juego simplificados.
 
-Saltar sobre un animal produce un rebote suave sin dañarlo. Un choque lateral quita un corazón, separa al jugador sin empujarlo al precipicio y concede 1.6 segundos de protección; los poderes se conservan. En modo explorador se atraviesa y observa la fauna sin daño y cada primera observación paga 5 monedas. No hay eliminaciones, patadas ni caparazones como proyectiles. Los caparazones de partidas anteriores vuelven a ser tortugas conservando sus observaciones.
+Saltar sobre un animal produce un rebote suave sin dañarlo y lo duerme durante 4 segundos. Mientras duerme cierra los ojos, muestra «Zz», permanece quieto y no causa daño por contacto. Después retoma su recorrido; se puede observar dormido y su sueño se conserva al guardar. Un choque lateral quita un corazón, separa al jugador sin empujarlo al precipicio y concede 1.6 segundos de protección; los poderes se conservan. En modo explorador se atraviesa y observa la fauna sin daño y cada primera observación paga 5 monedas. No hay eliminaciones, patadas ni caparazones como proyectiles. Los caparazones de partidas anteriores vuelven a ser tortugas conservando sus observaciones.
 
 Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (BCS, 2/4), corrido fronterizo (BC, 3/4) y polca chihuahuense (Chihuahua, 2/4). Cada nivel cambia la melodía, el tempo y el acompañamiento. No requieren descargar audio.
 
@@ -57,4 +57,4 @@ Puntaje único en monedas: cada moneda recogida suma 1; observar por primera vez
 
 ## Validación de fauna
 
-Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, inmunidad, pago por observación, migración de caparazones y patrullas de un minuto a 30, 60 y 120 FPS. Son pruebas de lógica con navegador y audio simulados.
+Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, sueño y despertar, inmunidad, pago por observación, migración de caparazones y patrullas de un minuto a 30, 60 y 120 FPS. Son pruebas de lógica con navegador y audio simulados.
