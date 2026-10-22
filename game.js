@@ -16,7 +16,36 @@ function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y
 function sprite(pattern,x,y,scale=2,gus=false){const colors={r:gus?'#64ad43':'#568fc2',h:'#613e2c',s:'#ffd394',k:'#252728',b:'#4b5d91',y:'#ffe181',w:'#fff1c5'};pattern.forEach((row,j)=>[...row].forEach((v,i)=>{if(colors[v])rect(x+i*scale,y+j*scale,scale,scale,colors[v])}))}
 // Original two-voice chiptune, synthesized locally so it also works offline.
 let musicBus,masterBus,musicTimer,nextNote=0,musicStep=0;
-const tune=[76,0,79,83,81,79,76,72,74,0,77,81,79,77,74,71,72,76,79,84,83,79,76,0,74,77,81,86,84,81,77,0,79,0,83,86,88,86,83,79,77,0,81,84,86,84,81,77,76,79,84,83,81,79,76,72,74,77,79,71,72,0,0,0];
+// Original melodies inspired by regional dance rhythms, rendered as chiptunes.
+const STATE_MUSIC=[
+ {name:'Polca sudcaliforniana',bpm:120,beats:2,gate:.72,thirds:false,
+  melody:[72,76,79,76,74,77,79,0,76,79,84,83,81,79,76,0,77,81,84,81,79,76,74,0,74,77,83,81,79,77,76,0,72,76,79,84,83,81,79,76,77,81,84,86,84,81,79,0,76,79,84,83,81,79,77,74,76,74,71,74,72,0,72,0],
+  roots:[48,48,53,55,48,53,55,48]},
+ {name:'Corrido fronterizo',bpm:108,beats:3,gate:.88,thirds:false,
+  melody:[67,0,71,74,76,74,71,0,67,69,71,0,69,0,72,76,77,76,72,0,69,71,72,0,71,0,74,79,78,76,74,0,71,72,74,0,71,74,72,69,66,69,67,0,67,0,0,0],
+  roots:[43,43,48,48,50,50,50,43]},
+ {name:'Polca chihuahuense',bpm:152,beats:2,gate:.57,thirds:true,
+  melody:[74,78,81,86,85,86,81,78,79,83,86,88,86,83,79,0,81,85,88,90,88,85,81,79,78,81,86,85,86,81,78,0,86,85,83,81,79,78,76,74,76,79,83,86,85,83,81,0,78,81,86,90,88,86,85,81,83,79,76,73,74,0,74,0],
+  roots:[38,43,45,38,38,43,45,38]}
+];
+let musicLevel=0;
+function playMusicStep(track,step,time,duration){
+ const note=track.melody[step%track.melody.length];
+ musicNote(note,time,duration*track.gate,'square',.022);
+ // A second, softer voice suggests accordion reeds in the brisk Chihuahua polca.
+ if(note&&track.thirds)musicNote(note-((note%12===6||note%12===1)?3:4),time,duration*.5,'square',.008);
+ const position=step%(track.beats*2);
+ const root=track.roots[Math.floor(step/(track.beats*4))%track.roots.length];
+ if(position===0){musicNote(root,time,duration*1.45,'triangle',.065);musicNote(36,time,.055,'sine',.025);}
+ else if(track.beats===2&&position===2)musicNote(root+7,time,duration*1.35,'triangle',.055);
+ // Offbeat accompaniment in 2/4; strummed beats two and three in 3/4.
+ if(track.beats===2?position%2===1:position===2||position===4){
+  musicNote(root+12,time,duration*.48,'triangle',.028);
+  musicNote(root+16,time,duration*.43,'triangle',.02);
+  musicNote(root+19,time,duration*.4,'triangle',.018);
+ }
+}
+
 function ensureAudio(){
  try{if(!audio){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return false;audio=new Audio();masterBus=audio.createGain();masterBus.gain.value=muted?0:1;masterBus.connect(audio.destination);musicBus=audio.createGain();musicBus.gain.value=0;musicBus.connect(masterBus);musicTimer=setInterval(scheduleMusic,75);}audio.resume().catch(()=>{});return true;}catch{return false;}
 }
@@ -25,9 +54,11 @@ function scheduleMusic(){
  if(!audio)return;const active=!muted&&state==='play'&&!document.hidden;
  musicBus.gain.setTargetAtTime(active?1:0,audio.currentTime,.025);
  if(!active){nextNote=0;return;}
+ if(musicLevel!==level){musicLevel=level;musicStep=0;nextNote=0;}
  if(!nextNote||nextNote<audio.currentTime)nextNote=audio.currentTime+.025;
- const stepDuration=60/140/2;
- while(nextNote<audio.currentTime+.16){musicNote(tune[musicStep%tune.length],nextNote,stepDuration*.82,'square',.025);if(musicStep%2===0){const bass=[48,53,48,55][Math.floor(musicStep/16)%4];musicNote(bass+(musicStep%4===2?12:0),nextNote,stepDuration*1.6,'triangle',.065);}musicStep++;nextNote+=stepDuration;}
+ const track=STATE_MUSIC[level-1]||STATE_MUSIC[0],stepDuration=60/track.bpm/2;
+ while(nextNote<audio.currentTime+.16){playMusicStep(track,musicStep,nextNote,stepDuration);musicStep++;nextNote+=stepDuration;}
+
 }
 function syncSound(){const button=document.querySelector('#sound');document.querySelector('#sound span').textContent=muted?'SONIDO OFF':'SONIDO ON';button.setAttribute('aria-label',muted?'Activar música y efectos':'Silenciar música y efectos');button.setAttribute('aria-pressed',String(!muted));if(audio){masterBus.gain.setTargetAtTime(muted?0:1,audio.currentTime,.015);scheduleMusic();}}
 function beep(freq,dur=.1,type='square'){if(muted||!ensureAudio())return;const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.045,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(masterBus);o.onended=()=>{o.disconnect();g.disconnect()};o.start();o.stop(audio.currentTime+dur)}
