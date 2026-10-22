@@ -136,7 +136,8 @@ function drawGraduate(flying){
  if(flying){ctx.translate(19,3);ctx.rotate(-Math.PI/2);ctx.translate(-12,0);}
  ctx.globalAlpha=progress;
  const shoulder=4+Math.round(growth*5),skin='#ffd394',shade='#d49b69',robe='#24283d';
- capeShape([[4,14],[20,14],[23,28],[20,30],[17,28],[13,31],[9,28],[5,30],[1,28]],robe);
+ capeShape([[4,14],[20,14],[23,29],[1,29]],robe);
+ rect(2,27,20,2,'#353d57');
  rect(6,16,12,10,'#353d57');
  capeShape([[7,14],[12,19],[17,14],[16,21],[12,25],[8,21]],skin);
  rect(11,20,2,4,shade);
@@ -146,8 +147,8 @@ function drawGraduate(flying){
  rect(20,15,shoulder+1,7,skin);rect(22,19,shoulder,6,skin);
  rect(24,22,shoulder-2,2,shade);rect(22+shoulder,18,7,8,skin);
  rect(23+shoulder,19,5,2,'#ffe7bc');
- capeShape([[2,14],[-2,16],[1,19],[-2,21],[3,20],[5,23],[7,15]],robe);
- capeShape([[18,14],[23,15],[26,18],[23,19],[26,22],[21,21],[18,18]],robe);
+ capeShape([[5,14],[2-shoulder,15],[1-shoulder,22],[5,23],[7,15]],robe);
+ capeShape([[18,14],[21+shoulder,15],[23+shoulder,22],[20,23],[17,15]],robe);
  rect(5,29+stride,6,3,'#613e2c');rect(15,29-stride,6,3,'#613e2c');
  ctx.restore();
 }
