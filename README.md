@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-Tres niveles, selección de Leo o Gus, monedas, ladrillos rompibles, tortugas y caparazones, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, estrella, pluma con capa y hongo verde.
+Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus, monedas, ladrillos rompibles, tortugas y caparazones, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, estrella, pluma con capa y hongo verde.
 
 ## Archivos
 
