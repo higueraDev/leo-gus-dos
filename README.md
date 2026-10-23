@@ -57,4 +57,8 @@ Puntaje único en monedas: cada moneda recogida suma 1; observar por primera vez
 
 ## Validación de fauna
 
-Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, sueño y despertar, inmunidad, pago por observación, migración de caparazones y patrullas de un minuto a 30, 60 y 120 FPS. Son pruebas de lógica con navegador y audio simulados.
+Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, sueño y despertar, inmunidad, compras y saldo, pago por observación, migración de caparazones y patrullas de un minuto a 30, 60 y 120 FPS. Son pruebas de lógica con navegador y audio simulados.
+
+## Comprar equipo
+
+Los bloques amarillos muestran el producto y su precio: hongo rojo 5 monedas, equipo explorador 10, parapente 20 y vida extra 15. Golpéalos desde abajo para comprar y equipar al instante. Cada bloque permite una compra y queda agotado. Si ya tienes el hongo rojo activo o un parapente, no se vuelve a cobrar por ese equipo. Si falta saldo, no se cobra ni se consume el bloque; el aviso indica cuánto falta. El saldo y los bloques comprados se guardan de inmediato. Las monedas se muestran como saldo disponible y se descuentan al comprar.

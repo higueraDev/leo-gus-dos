@@ -83,5 +83,28 @@ for(const selected of ['leo','gus']){
  player.on=false;player.y=250;player.vy=0;player.jumpHeld=true;player.flight=.01;update(.025);check(player.flight===0,'flight energy cannot be negative');
  player.flight=2.3;saveGame(false);continueGame();check(player.cape&&player.flight===2.3,'legacy cape save retains paraglider and energy');
 }
+for(const selected of ['leo','gus'])for(const kind of ['red','star','feather','green']){
+ reset('crab',selected);enemies=[];const block={x:300,y:300,w:32,h:32,type:'question',used:false,item:kind};platforms.push(block);
+ const price=SHOP_ITEMS[kind].price;coins=price-1;
+ check(!purchaseBlock(block)&&coins===price-1&&!block.used,'insufficient funds keep block available');
+ check(notice.text.includes('TE FALTAN 1'),'shortfall is explained');
+ coins=price;const beforeLives=lives;check(purchaseBlock(block)&&coins===0&&block.used,'exact balance purchases once');
+ check(kind==='red'?player.big:kind==='star'?player.star===12:kind==='feather'?player.cape&&player.flight===6:lives===beforeLives+1,'purchased effect applies immediately');
+ check(!purchaseBlock(block)&&coins===0,'used block cannot charge twice');
+ const saved=readSave();check(saved.coins===0&&saved.platforms.find(p=>p.item===kind&&p.x===300).used,'purchase persisted');
+ continueGame();check(coins===0&&platforms.find(p=>p.item===kind&&p.x===300).used,'reload keeps balance and sold block');
+}
+reset();enemies=[];gold=[];coins=10;const shop={x:300,y:300,w:32,h:32,type:'question',used:false,item:'star'};platforms.push(shop);
+player.x=304;player.y=333;player.vy=-100;player.on=false;player.jumps=1;update(.025);
+check(shop.used&&coins===0&&player.star>11,'head collision purchases explorer');
+reset();enemies=[];gold=[];coins=9;const unaffordable={x:300,y:300,w:32,h:32,type:'question',used:false,item:'star'};platforms.push(unaffordable);
+player.x=304;player.y=333;player.vy=-100;player.on=false;player.jumps=1;update(.025);
+check(!unaffordable.used&&coins===9&&player.star===0,'head collision cannot grant unpaid gear');
+reset();const invalid={x:300,y:300,w:32,h:32,type:'brick',used:false,item:'star'};coins=30;check(!purchaseBlock(invalid)&&coins===30,'bricks cannot charge money');
+reset();const pausedShop={x:300,y:300,w:32,h:32,type:'question',used:false,item:'star'};coins=30;state='pause';check(!purchaseBlock(pausedShop)&&coins===30,'paused game cannot charge money');
+for(const kind of ['red','feather']){
+ reset();coins=50;player.big=kind==='red';player.cape=kind==='feather';const owned={x:300,y:300,w:32,h:32,type:'question',used:false,item:kind};
+ check(!purchaseBlock(owned)&&coins===50&&!owned.used,'owned equipment cannot waste coins');
+}
 console.log(checks+' wildlife checks passed.');
 `,sandbox);
