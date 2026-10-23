@@ -84,3 +84,11 @@ La escala de distancia es de 1000 píxeles de avance nuevo = 1 km del juego, no 
 El resumen de victoria concede el reconocimiento del juego «Guardianes de México» cuando se han completado las 32 entidades, por explorar respetando la flora y fauna. Las partidas antiguas recuperan las entidades y datos disponibles y se marcan como registros parciales, sin inventar observaciones pasadas. Los datos nuevos se conservan al guardar y continuar.
 
 Ejecuta `node tests/expedition-records.cjs` para comprobar métricas, deduplicación, saldo, persistencia, reinicio, historial, migración y reconocimiento.
+
+### Cuaderno y binoculares
+
+El cuaderno está disponible desde el inicio: tecla **N** o botón CUADERNO. Acércate en tierra a los letreros FLORA y VISTA para registrar vegetación y paisaje; cada ficha paga 3 monedas una sola vez por estado. La lupa del equipo explorador registra fauna en el mismo cuaderno sin cambiar el conteo de especies únicas. Los nombres de vegetación son categorías del escenario, no un catálogo botánico.
+
+Los binoculares cuestan **12 monedas** en un bloque amarillo de cada nivel. Usa **B** o el botón BINOCULARES para ver el camino por delante. Ambas consultas detienen la acción y el tiempo; VOLVER o Escape reanuda. El equipo y las fichas se conservan entre estados, al perder una vida y al recuperar la partida. Las partidas anteriores siguen siendo compatibles.
+
+Validación adicional: `node tests/field-tools.cjs`.
