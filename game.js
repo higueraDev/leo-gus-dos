@@ -7,26 +7,37 @@ const RECORDS_KEY='higueradev.leo-gus.expeditions.v1';
 const SPECIES_NAMES={turtle:'Tortuga',crab:'Cangrejo',snake:'Serpiente de cascabel',scorpion:'Alacrán',rabbit:'Conejo',hare:'Liebre',squirrel:'Ardilla',deer:'Venado cola blanca',roadrunner:'Correcaminos',iguana:'Iguana',coati:'Coatí',armadillo:'Armadillo',raccoon:'Mapache',fox:'Zorra gris'};
 let expedition=freshExpedition();
 function freshExpedition(){return {startedAt:Date.now(),progress:{},completedRegions:[],species:[],earnedCoins:0,spentCoins:0,partial:false,binoculars:false,journal:{}}; }
-let fieldMode=null;
+let fieldMode=null,fieldNearby=new Set();
 const FIELD_FLORA={coast:'Vegetación costera',desert:'Vegetación del desierto',forest:'Vegetación del bosque',highland:'Vegetación de altura',farmland:'Cultivos regionales',city:'Áreas verdes urbanas',volcano:'Vegetación volcánica',jungle:'Vegetación de selva',wetland:'Vegetación de humedal'};
-function fieldEntries(){return [{id:'flora',name:FIELD_FLORA[region().biome]||'Vegetación regional',x:600},{id:'landscape',name:'Paisaje de '+region().name,x:1250}];}
+function fieldEntries(){return [{id:'flora',name:FIELD_FLORA[region().biome]||'Vegetación regional',x:1550},{id:'landscape',name:'Paisaje de '+region().name,x:2400}];}
 function journalEntry(id,name,reward=0){
  const entries=expedition.journal[region().id]||(expedition.journal[region().id]=[]);
  if(entries.some(entry=>entry.id===id))return false;
  entries.push({id,name});if(reward)earnCoins(reward);
  notice={text:'CUADERNO: '+name.toUpperCase()+(reward?' · +'+reward+' MONEDAS':''),time:3};return true;
 }
-function discoverField(){for(const entry of fieldEntries())if(Math.abs(player.x-entry.x)<55&&player.on)journalEntry(entry.id,entry.name,3);}
+function discoverField(){
+ if(state!=='play'||fieldMode)return;
+ for(const entry of fieldEntries()){
+  const distance=Math.abs(player.x-entry.x),height=Math.abs(player.y+player.h-416);
+  if(distance>85||height>40)fieldNearby.delete(entry.id);
+  if(!expedition.binoculars||!player.on||distance>=55||height>18||fieldNearby.has(entry.id))continue;
+  fieldNearby.add(entry.id);player.survey=.95;player.surveyFacing=entry.x<player.x?-1:1;player.surveyKind=entry.id;
+  const first=journalEntry(entry.id,entry.name,3);
+  notice={text:'OBSERVANDO: '+entry.name.toUpperCase()+(first?' · +3 MONEDAS':' · YA REGISTRADO'),time:2};beep(720,.08,'triangle');
+ }
+}
+function syncFieldTools(){document.querySelector('#binoculars').textContent=expedition.binoculars?'BINOCULARES · AUTO':'BINOCULARES · 12 MONEDAS';}
+
 function closeField(){fieldMode=null;document.querySelector('#field-panel').hidden=true;Object.keys(keys).forEach(k=>keys[k]=false);camera=Math.max(0,Math.min(world-960,player.x-300));scheduleMusic();}
 function openField(mode){
+ if(mode!=='journal')return;
  if(fieldMode){closeField();return;}
  if(state!=='play'&&state!=='end')return;
- if(mode==='binoculars'&&(state!=='play'||!expedition.binoculars)){notice={text:'BINOCULARES · DISPONIBLES EN BLOQUES · 12 MONEDAS',time:3};return;}
- fieldMode=mode;document.querySelector('#field-panel').classList.toggle('is-binoculars',mode==='binoculars');Object.keys(keys).forEach(k=>keys[k]=false);saveGame(false);
+ fieldMode=mode;Object.keys(keys).forEach(k=>keys[k]=false);saveGame(false);
  const panel=document.querySelector('#field-panel');panel.hidden=false;
- document.querySelector('#field-title').textContent=mode==='journal'?'CUADERNO DE CAMPO':'BINOCULARES · RUTA POR DELANTE';
- document.querySelector('#field-content').innerHTML=mode==='journal'?'<p>Registra animales con la lupa del equipo explorador y visita los letreros FLORA y VISTA. Las cantidades representan encuentros del juego, no poblaciones reales.</p>'+REGIONS.map(r=>{const entries=expedition.journal[r.id]||[],visited=r.id===region().id||Object.hasOwn(expedition.progress,r.id)||expedition.completedRegions.includes(r.id);return visited?'<article><h3>'+r.name+'</h3><p class="field-population">Encuentros del nivel (aproximación): '+Object.entries(r.population).map(([kind,count])=>SPECIES_NAMES[kind]+' ×'+count+(count>=3?' (frecuente)':count===2?' (habitual)':' (ocasional)')).join(' · ')+'</p><p>Fichas descubiertas: '+entries.length+'</p><ul>'+entries.map(e=>'<li>'+e.name+'</li>').join('')+'</ul></article>':'';}).join('')||'<p>Acércate a los letreros de vegetación y paisaje. Usa la lupa del equipo explorador para registrar animales. Cada ficha de flora o paisaje da 3 monedas una sola vez por estado.</p>':'<p>La expedición está detenida. Inspecciona plataformas, animales y huecos antes de continuar.</p>';
- if(mode==='binoculars')camera=Math.max(0,Math.min(world-960,player.x+250));
+ document.querySelector('#field-title').textContent='CUADERNO DE CAMPO';
+ document.querySelector('#field-content').innerHTML='<p>Registra animales con la lupa del equipo explorador. Compra binoculares y pasa cerca de FLORA y VISTA: observarás automáticamente y cada ficha nueva dará 3 monedas. Las cantidades representan encuentros del juego, no poblaciones reales.</p>'+REGIONS.map(r=>{const entries=expedition.journal[r.id]||[],visited=r.id===region().id||Object.hasOwn(expedition.progress,r.id)||expedition.completedRegions.includes(r.id);return visited?'<article><h3>'+r.name+'</h3><p class="field-population">Encuentros del nivel (aproximación): '+Object.entries(r.population).map(([kind,count])=>SPECIES_NAMES[kind]+' ×'+count+(count>=3?' (frecuente)':count===2?' (habitual)':' (ocasional)')).join(' · ')+'</p><p>Fichas descubiertas: '+entries.length+'</p><ul>'+entries.map(e=>'<li>'+e.name+'</li>').join('')+'</ul></article>':'';}).join('');
  document.querySelector('#field-close').focus();scheduleMusic();
 }
 function expeditionKm(){return Object.values(expedition.progress).reduce((total,value)=>total+value,0)/1000;}
@@ -158,17 +169,17 @@ function stagePlatform(index){
 function stageGaps(){return [[780,890],[1650,1770],[2650,2780]].map(([a,b],index)=>{const shift=['bcs','bc','chih'].includes(region().id)?0:((level+index)%3-1)*16;return [a+shift,b+shift];});}
 function syncJourney(){document.querySelectorAll('[data-region]').forEach((node,index)=>{node.classList.toggle('visited',index<level-1);if(index===level-1)node.setAttribute('aria-current','step');else node.removeAttribute('aria-current');});}
 function heroHeight(big=false){return (hero==='gus'?38:32)*(big?1.5:1);}
-function setup(){const retained=player?{big:player.big,cape:player.cape,star:player.star}:{};goal=null;items=[];notice=null;world=levelLength(level);platforms=[];gold=[];enemies=[];particles=[];const gaps=stageGaps();let start=0;for(const [a,b]of gaps){platforms.push({x:start,y:416,w:a-start,h:64,type:'ground'});start=b}platforms.push({x:start,y:416,w:world-start,h:64,type:'ground'});for(let i=0;i<13;i++){const {x,y,w}=stagePlatform(i);for(let offset=0;offset<w;offset+=32)platforms.push({x:x+offset,y,w:32,h:24,type:'brick'});for(let j=0;j<3;j++)gold.push({x:x+j*30+14,y:y-32,taken:false});if(i%2===0)platforms.push({x:x+32,y:y-105,w:32,h:32,type:'question',used:false,item:i===8?'binoculars':['red','star','feather','green'][(i/2)%4]})}spawnRegionalEnemies();for(let x=130;x<world-180;x+=120)if(!gaps.some(([a,b])=>x>a-20&&x<b+20))gold.push({x,y:365,taken:false});player={x:60,y:380,w:24,h:32,vx:0,vy:0,on:false,jumps:0,jumpHeld:false,walkDistance:0,inv:1.2,big:false,cape:false,star:0,flight:6,...retained};player.h=heroHeight(player.big);player.y=412-player.h;camera=0;timer=180;clock=0;notice={text:region().name+' · '+region().caption,time:4};syncJourney();}
+function setup(){fieldNearby.clear();syncFieldTools();const retained=player?{big:player.big,cape:player.cape,star:player.star}:{};goal=null;items=[];notice=null;world=levelLength(level);platforms=[];gold=[];enemies=[];particles=[];const gaps=stageGaps();let start=0;for(const [a,b]of gaps){platforms.push({x:start,y:416,w:a-start,h:64,type:'ground'});start=b}platforms.push({x:start,y:416,w:world-start,h:64,type:'ground'});for(let i=0;i<13;i++){const {x,y,w}=stagePlatform(i);for(let offset=0;offset<w;offset+=32)platforms.push({x:x+offset,y,w:32,h:24,type:'brick'});for(let j=0;j<3;j++)gold.push({x:x+j*30+14,y:y-32,taken:false});if(i%2===0)platforms.push({x:x+32,y:y-105,w:32,h:32,type:'question',used:false,item:i===4?'binoculars':i===8?'feather':['red','star','feather','green'][(i/2)%4]})}spawnRegionalEnemies();for(let x=130;x<world-180;x+=120)if(!gaps.some(([a,b])=>x>a-20&&x<b+20))gold.push({x,y:365,taken:false});player={x:60,y:380,w:24,h:32,vx:0,vy:0,on:false,jumps:0,jumpHeld:false,walkDistance:0,inv:1.2,big:false,cape:false,star:0,flight:6,...retained};player.h=heroHeight(player.big);player.y=412-player.h;camera=0;timer=180;clock=0;notice={text:region().name+' · '+region().caption,time:4};syncJourney();}
 function begin(){closeField();expedition=freshExpedition();document.querySelector('#screen').classList.remove('has-result');document.querySelector('#expedition-summary').hidden=true;document.querySelector('.characters').hidden=false;document.querySelector('.tag').textContent='SELECCIONAR JUGADOR';document.querySelector('#screen').classList.add('is-playing');coins=0;lives=3;level=1;player=null;setup();state='play';overlay.style.display='none';document.querySelector('#pause').style.display='block';pauseLayer.hidden=true;musicStep=0;nextNote=0;if(!muted)ensureAudio();syncSound();beep(440);saveGame(false)}
-function die(){lives--;beep(130,.3,'sawtooth');if(lives<=0){finish(false);return}player.x=Math.max(60,player.x-160);player.y=200;player.vx=0;player.vy=0;player.inv=2;player.big=false;player.cape=false;player.star=0;player.h=heroHeight();player.on=false;player.jumps=1;}
+function die(){lives--;beep(130,.3,'sawtooth');if(lives<=0){finish(false);return}player.x=Math.max(60,player.x-160);player.y=200;player.vx=0;player.vy=0;player.inv=2;player.big=false;player.cape=false;player.star=0;player.survey=0;fieldNearby.clear();player.h=heroHeight();player.on=false;player.jumps=1;}
 function finish(win){if(state==='end')return;const result=saveResult(win);clearSave();document.querySelector('#screen').classList.remove('is-playing');state='end';overlay.style.display='flex';document.querySelector('#message').textContent=win?'¡AVENTURA COMPLETADA!':'FIN DE LA EXPEDICIÓN';showResult(result);document.querySelector('#start').innerHTML='↻ NUEVA EXPEDICIÓN <span>ENTER ↵</span>';document.querySelector('#pause').style.display='none';}
 function pause(){if(fieldMode)closeField();if(state==='play'){state='pause';pauseLayer.hidden=false;saveGame(false)}else if(state==='pause'){state='play';pauseLayer.hidden=true}scheduleMusic();}
 function breakBrick(block){block.broken=true;beep(160,.12,'sawtooth');for(let i=0;i<4;i++)particles.push({type:'debris',x:block.x+(i%2)*16+4,y:block.y+Math.floor(i/2)*12,vx:i%2?95:-95,vy:i<2?-240:-150,life:.75});}
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function update(dt){if(fieldMode)return;if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<REGIONS.length){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180;if(state!=='play')return;}player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
+function update(dt){if(fieldMode)return;if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<REGIONS.length){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180;if(state!=='play')return;}player.survey=Math.max(0,(player.survey||0)-dt);player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
 player.x+=player.vx*dt;for(const p of platforms)if(hit(player,p)){if(player.vx>0)player.x=p.x-player.w;else if(player.vx<0)player.x=p.x+p.w}player.x=Math.max(0,player.x);recordTravel(player.x);if(!player.on&&player.jumps===0)player.jumps=1;const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&player.vy>=0;if(flying){player.flight=Math.max(0,player.flight-dt);player.vy=Math.min(65,player.vy+180*dt)}else player.vy+=1350*dt;player.y+=player.vy*dt;player.on=false;for(const p of platforms)if(hit(player,p)){if(player.vy>0){player.y=p.y-player.h;player.vy=0;player.on=true;player.jumps=0;player.flight=6}else if(player.vy<0){player.y=p.y+p.h;player.vy=0;if(p.type==='brick'){breakBrick(p)}else if(p.type==='question'&&!p.used)purchaseBlock(p)}}platforms=platforms.filter(p=>!p.broken);if(player.y>520){die();if(state!=='play')return;}
 for(const c of gold)if(!c.taken&&Math.abs(player.x+12-c.x)<23&&Math.abs(player.y+16-c.y)<29){c.taken=true;earnCoins(1);beep(900,.06)}
-if(player.on&&Math.abs(player.vx)>0)player.walkDistance=(player.walkDistance||0)+Math.abs(player.x-previousX);updateItems(dt);discoverField();if(player.big&&player.h<heroHeight(true))resizePlayer(heroHeight(true));updateEnemies(dt,previousBottom);if(state!=='play')return;
+if(player.on&&Math.abs(player.vx)>0)player.walkDistance=(player.walkDistance||0)+Math.abs(player.x-previousX);updateItems(dt);if(!player.on)player.survey=0;discoverField();if(player.big&&player.h<heroHeight(true))resizePlayer(heroHeight(true));updateEnemies(dt,previousBottom);if(state!=='play')return;
 for(const p of particles){if(p.type==='debris'){p.x+=p.vx*dt;p.vy+=850*dt;p.y+=p.vy*dt}else p.y-=65*dt;p.life-=dt}particles=particles.filter(p=>p.life>0);camera=Math.max(0,Math.min(world-960,player.x-300));const poleX=world-135;if(Math.min(previousX,player.x)<=poleX+4&&Math.max(previousX+player.w,player.x+player.w)>=poleX&&player.y+player.h>=POLE_TOP&&player.y<=POLE_BOTTOM)captureFlag();player.x=Math.min(player.x,world-player.w);}
 function resizePlayer(height){const bottom=player.y+player.h,next={...player,y:bottom-height,h:height};if(height>player.h&&platforms.some(p=>hit(next,p)))return false;player.y=next.y;player.h=height;return true;}
 function hurt(){if(player.inv||player.star)return;lives--;if(lives<=0){finish(false);return;}player.inv=1.6;beep(180,.15);notice={text:'¡CUIDADO! DALE ESPACIO A LA FAUNA',time:1.6};}
@@ -181,7 +192,7 @@ function purchaseBlock(block){
  notice={text:'COMPRADO: '+product.name+' · −'+product.price+' MONEDAS',time:2};
  saveGame(false);return true;
 }
-function collectItem(item){if(item.kind==='binoculars')expedition.binoculars=true;beep(1100,.2);const messages={red:'HONGO ROJO · ¡AHORA ERES GRANDE!',star:'EXPLORADOR · OBSERVA SIN DAÑO · 12 S',feather:'PARAPENTE · MANTÉN SALTO AL CAER',green:'HONGO VERDE · ¡VIDA EXTRA!',binoculars:'BINOCULARES · B PARA INSPECCIONAR EL CAMINO'};notice={text:messages[item.kind],time:3};if(item.kind==='red'){player.big=true;resizePlayer(heroHeight(true))}if(item.kind==='star'){player.star=12;player.examine=0;for(const e of enemies)e.explorerNearby=false;}if(item.kind==='feather'){player.cape=true;player.flight=6}if(item.kind==='green')lives++;}
+function collectItem(item){if(item.kind==='binoculars'){expedition.binoculars=true;syncFieldTools();}beep(1100,.2);const messages={red:'HONGO ROJO · ¡AHORA ERES GRANDE!',star:'EXPLORADOR · OBSERVA SIN DAÑO · 12 S',feather:'PARAPENTE · MANTÉN SALTO AL CAER',green:'HONGO VERDE · ¡VIDA EXTRA!',binoculars:'BINOCULARES · OBSERVACIÓN AUTOMÁTICA EN FLORA Y VISTA'};notice={text:messages[item.kind],time:3};if(item.kind==='red'){player.big=true;resizePlayer(heroHeight(true))}if(item.kind==='star'){player.star=12;player.examine=0;for(const e of enemies)e.explorerNearby=false;}if(item.kind==='feather'){player.cape=true;player.flight=6}if(item.kind==='green')lives++;}
 function updateItems(dt){for(const item of items){if(item.taken)continue;item.age+=dt;if(item.age<.35)continue;if(item.age-dt<.35)item.vx=item.kind==='feather'?0:55;const oldY=item.y;item.x+=item.vx*dt;for(const p of platforms)if(hit(item,p)){item.x=item.vx>0?p.x-item.w:p.x+p.w;item.vx=-item.vx;break}item.vy+=700*dt;item.y+=item.vy*dt;for(const p of platforms)if(hit(item,p)&&item.vy>0&&oldY+item.h<=p.y+2){item.y=p.y-item.h;item.vy=item.kind==='star'?-260:0;break}if(hit(player,item)){item.taken=true;collectItem(item)}}items=items.filter(i=>!i.taken&&i.y<540);}
 function drawExplorerHelmet(x,y){
  rect(x+7,y-4,10,2,'#d8c08a');rect(x+4,y-2,16,5,'#c4a66b');
@@ -218,6 +229,14 @@ function drawParagliderHarness(flying){
  rect(10,23,4,2,'#e9d5a5');
  if(flying){rect(-2,11,4,7,'#ffd394');rect(22,11,4,7,'#ffd394');rect(-1,10,2,4,'#48514b');rect(23,10,2,4,'#48514b');}
 }
+function drawBinoculars(){
+ const elapsed=.95-player.survey,lower=Math.max(0,Math.min(1,(.15-player.survey)/.15)),lift=Math.min(1,elapsed/.16)*(1-lower),y=Math.round(19-lift*13);
+ const sleeve=hero==='gus'?'#64ad43':'#568fc2';
+ pixelShape([[17,18],[21,17],[26,y+6],[23,y+4],[19,15]],sleeve);
+ rect(22,y+4,6,4,'#ffd394');rect(17,y,10,4,'#294944');rect(25,y-1,7,5,'#183932');
+ rect(18,y+6,10,4,'#3b6256');rect(25,y+6,7,5,'#21483f');rect(30,y-2,4,7,'#142e2b');rect(31,y,3,3,'#b8e4d9');rect(29,y+5,4,7,'#142e2b');rect(30,y+7,3,3,'#91c7bf');
+ rect(20,y+1,5,1,'#b79a68');rect(22,y+6,4,1,'#b79a68');rect(23,y+8,4,3,'#ffd394');
+}
 function drawExplorer(){
  const x=4,y=14,trim=hero==='gus'?'#64ad43':'#568fc2';
  ctx.save();ctx.globalAlpha=Math.min(1,(12-player.star)/.3);
@@ -232,13 +251,14 @@ function drawExplorer(){
  }
 }
 function drawPlayer(){
- const facing=player.examine>0?player.examineFacing:player.facing;
+ const surveying=player.survey>0&&!(player.examine>0),facing=player.examine>0?player.examineFacing:surveying?player.surveyFacing:player.facing;
  ctx.save();ctx.translate(player.x+player.w/2,player.y);ctx.scale(facing===-1?-1:1,player.h/32);ctx.translate(-12,0);
  const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&player.vy>=0&&state==='play';
  if(player.cape)drawParaglider(flying);
- const pose=playerPose();sprite(player.star>0?pose.map((row,index)=>index<2?'0'.repeat(row.length):row):pose,0,0,2,hero==='gus');
+ const pose=playerPose().map((row,index)=>surveying&&index>=10&&index<=11?row.replace(/s/g,'r'):row);sprite(player.star>0?pose.map((row,index)=>index<2?'0'.repeat(row.length):row):pose,0,0,2,hero==='gus');
  if(player.star>0)drawExplorer();
  if(player.cape)drawParagliderHarness(flying);
+ if(surveying)drawBinoculars();
  ctx.restore();
 }
 
@@ -562,10 +582,27 @@ function drawShopBlock(block){
  ctx.textAlign='center';ctx.fillStyle='#f5efce';ctx.font='bold 10px monospace';ctx.fillText(product.name,block.x+16,block.y-25);
  ctx.fillStyle=affordable?'#ffdc79':'#ff9ba1';ctx.font='bold 13px monospace';ctx.fillText(product.price+' MONEDAS',block.x+16,block.y-10);ctx.textAlign='start';
 }
+function drawFieldPoint(entry,theme){
+ if(entry.x<camera-150||entry.x>camera+1000)return;
+ const logged=(expedition.journal[theme.id]||[]).some(e=>e.id===entry.id);
+ if(entry.id==='flora'){
+  if(theme.biome==='desert')drawCardon(entry.x+45,416,55);
+  else if(['forest','highland','volcano'].includes(theme.biome))drawPine(entry.x+60,416,64);
+  else if(['coast','jungle','wetland'].includes(theme.biome)){ctx.save();ctx.translate(entry.x+58,416);ctx.scale(.6,.6);drawPalm(0,0);ctx.restore();}
+  else for(let i=0;i<3;i++){rect(entry.x+48+i*12,389-i%2*9,3,27+i%2*9,'#4c7952');rect(entry.x+45+i*12,383-i%2*9,9,8,i%2?'#f3ca71':'#dc9e83');}
+ }else{
+  ctx.save();ctx.translate(entry.x+40,416);ctx.scale(.32,.32);ctx.translate(0,-406);
+  if(theme.landmark==='arch'){rect(0,325,40,81,'#b8aa80');rect(115,325,40,81,'#b8aa80');rect(0,310,155,25,'#d1bd91');}else drawNationalLandmark(theme,0);
+  ctx.restore();
+ }
+ rect(entry.x+10,379,4,37,'#6d563b');rect(entry.x-9,365,43,20,logged?'#386b56':'#e7cc87');
+ ctx.fillStyle=logged?'#ecf4cb':'#294c43';ctx.font='bold 10px monospace';ctx.fillText(entry.id==='flora'?'FLORA':'VISTA',entry.x-5,379);
+ if(player.survey>0&&player.surveyKind===entry.id){rect(entry.x-4,348,6,9,'#b8e4d9');rect(entry.x+5,348,6,9,'#b8e4d9');rect(entry.x+1,351,5,3,'#294944');}
+}
 function draw(){drawRegionalBackground();const theme=region();
 ctx.save();ctx.translate(-Math.round(camera),0);for(const p of platforms){if(p.x+p.w<camera||p.x>camera+960)continue;if(p.type==='ground'){rect(p.x,p.y,p.w,p.h,theme.soil);rect(p.x,p.y,p.w,9,theme.edge);rect(p.x,p.y,p.w,3,theme.speck);for(let x=p.x+6;x<p.x+p.w;x+=32){rect(x,p.y+19,13,5,theme.speck);rect(x+17,p.y+43,8,6,theme.shadow)}}else if(p.type==='brick'){rect(p.x,p.y,p.w,p.h,'#ad7952');for(let x=p.x;x<p.x+p.w;x+=32){rect(x,p.y,32,2,'#e0ad72');rect(x,p.y+12,32,2,'#654733');rect(x,p.y,2,12,'#654733');rect(x+16,p.y+12,2,12,'#654733')}}else drawShopBlock(p);}
 for(const c of gold)if(!c.taken){const w=6+Math.abs(Math.sin(performance.now()/200+c.x))*5;rect(c.x-w/2,c.y-10,w,19,'#e9a93d');rect(c.x-w/2+2,c.y-8,3,14,'#ffe5a0')}
-for(const entry of fieldEntries()){const logged=(expedition.journal[theme.id]||[]).some(e=>e.id===entry.id);rect(entry.x+10,379,4,37,'#6d563b');rect(entry.x-9,365,43,20,logged?'#386b56':'#e7cc87');ctx.fillStyle=logged?'#ecf4cb':'#294c43';ctx.font='bold 10px monospace';ctx.fillText(entry.id==='flora'?'FLORA':'VISTA',entry.x-5,379);}for(const item of items)drawItem(item);for(const e of enemies)if(e.alive&&e.x+e.w>=camera-20&&e.x<=camera+980){if(e.kind==='turtle')drawTurtle(e);else drawRegionalEnemy(e);drawAnimalSleep(e);}
+for(const entry of fieldEntries())drawFieldPoint(entry,theme);for(const item of items)drawItem(item);for(const e of enemies)if(e.alive&&e.x+e.w>=camera-20&&e.x<=camera+980){if(e.kind==='turtle')drawTurtle(e);else drawRegionalEnemy(e);drawAnimalSleep(e);}
 const flag=world-135;rect(flag,220,4,196,'#ece4bd');rect(flag-4,213,12,12,'#e6c269');const flagY=goal?goal.flagY:227;rect(flag+4,flagY,49,31,hero==='leo'?'#568fc2':'#55b84c');ctx.fillStyle='#fff2d4';ctx.font='bold 17px monospace';ctx.fillText(hero==='leo'?'L':'G',flag+19,flagY+22);rect(world-80,352,70,64,'#b4a07b');rect(world-65,376,24,40,'#3b5147');for(let i=0;i<4;i++)rect(world-80+i*20,340,12,15,'#b4a07b');
 if(state==='menu'){sprite(sprites.leo,170,384,2);ctx.save();ctx.translate(205,378);ctx.scale(1,38/32);sprite(sprites.leo,0,0,2,true);ctx.restore()}else if(player&&(player.inv<=0||Math.floor(performance.now()/85)%2===0))drawPlayer();for(const p of particles)if(p.life>0){if(p.type==='debris'){rect(p.x,p.y,10,8,'#ad7952');rect(p.x,p.y,10,2,'#e0ad72')}}ctx.restore();if(state!=='menu'){drawHud(theme);ctx.font='bold 12px monospace';ctx.fillStyle='#f5efce';ctx.fillText('ESPECIES '+expedition.species.length,795,75);if(player.star>0||player.cape||player.big){ctx.fillStyle='#ffdf79';ctx.font='bold 12px monospace';ctx.fillText(player.star>0?'EXPLORADOR · INMUNE '+Math.ceil(player.star)+'s':player.cape?'PARAPENTE · PLANEO '+Math.ceil(player.flight)+'s':'SUPER '+hero.toUpperCase(),26,75)}if(notice&&notice.time>0){rect(180,430,600,28,'#173c3bdd');ctx.textAlign='center';ctx.fillStyle='#ffdf79';ctx.font='bold 13px monospace';ctx.fillText(notice.text,480,449);ctx.textAlign='start'}}}
 function drawHeart(x,y,color='#f34d57'){
@@ -612,7 +649,7 @@ function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch{}continueButton
 function continueGame(){
  const data=readSave();if(!data){saveStatus.textContent='No se encontró una partida compatible.';refreshContinue();return;}
  hero=data.hero;level=savedStage(data);expedition=restoreExpedition(data);lives=data.lives;coins=data.coins;timer=data.timer;clock=data.clock;
- player={...data.player};platforms=data.platforms;gold=data.gold;enemies=data.enemies.map(restoreAnimal);items=data.items;
+ fieldNearby.clear();player={...data.player,survey:0};syncFieldTools();platforms=data.platforms;gold=data.gold;enemies=data.enemies.map(restoreAnimal);items=data.items;
  if(!data.faunaRevision){const previous=enemies;enemies=[];spawnRegionalEnemies();for(const animal of enemies){const index=previous.findIndex(e=>e.kind===animal.kind);if(index>=0){const old=previous.splice(index,1)[0];animal.observed=Boolean(old.observed);animal.sleep=old.sleep;}}player.inv=Math.max(player.inv,2);}
  world=data.version<3?3600+data.level*260:data.world;camera=Math.max(0,Math.min(world-960,player.x-300));particles=[];goal=null;state='play';saveElapsed=0;syncJourney();
  Object.keys(keys).forEach(k=>keys[k]=false);player.jumpHeld=false;
@@ -630,11 +667,11 @@ document.querySelector('#save-pause').onclick=event=>{event.stopPropagation();sa
 continueButton.onclick=continueGame;
 window.addEventListener('pagehide',()=>saveGame(false));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame(false);});
-document.querySelector('#field-close').onclick=closeField;document.querySelector('#journal').onclick=()=>openField('journal');document.querySelector('#binoculars').onclick=()=>openField('binoculars');
+document.querySelector('#field-close').onclick=closeField;document.querySelector('#journal').onclick=()=>openField('journal');
 renderRecords();document.querySelector('#choose-hero').onclick=chooseHero;
 refreshContinue();
 
-setup();requestAnimationFrame(frame);document.querySelector('#start').onclick=begin;document.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>{hero=b.dataset.hero;document.querySelectorAll('[data-hero]').forEach(x=>{x.classList.toggle('chosen',x===b);x.setAttribute('aria-pressed',String(x===b))})});document.querySelector('#pause').onclick=pause;pauseLayer.onclick=pause;document.querySelector('#sound').onclick=()=>{muted=!muted;if(!muted)ensureAudio();syncSound();beep(600)};syncSound();document.addEventListener('visibilitychange',scheduleMusic);window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat){if(e.code==='Enter'&&(state==='menu'||state==='end'))begin();if(e.code==='KeyB')openField('binoculars');if(e.code==='KeyN')openField('journal');if(e.code==='Escape'&&fieldMode)closeField();else if(e.code==='KeyP'||e.code==='Escape'){if(fieldMode)closeField();pause();}if(e.code==='KeyR'&&state!=='menu')begin()}keys[e.code]=true});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')pause()});document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[b.dataset.key]=true};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>keys[b.dataset.key]=false});
+setup();requestAnimationFrame(frame);document.querySelector('#start').onclick=begin;document.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>{hero=b.dataset.hero;document.querySelectorAll('[data-hero]').forEach(x=>{x.classList.toggle('chosen',x===b);x.setAttribute('aria-pressed',String(x===b))})});document.querySelector('#pause').onclick=pause;pauseLayer.onclick=pause;document.querySelector('#sound').onclick=()=>{muted=!muted;if(!muted)ensureAudio();syncSound();beep(600)};syncSound();document.addEventListener('visibilitychange',scheduleMusic);window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat){if(e.code==='Enter'&&(state==='menu'||state==='end'))begin();if(e.code==='KeyN')openField('journal');if(e.code==='Escape'&&fieldMode)closeField();else if(e.code==='KeyP'||e.code==='Escape'){if(fieldMode)closeField();pause();}if(e.code==='KeyR'&&state!=='menu')begin()}keys[e.code]=true});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')pause()});document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[b.dataset.key]=true};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>keys[b.dataset.key]=false});
 
 // Keep touch controls inside the element promoted to the fullscreen top layer.
 const gameScreen=document.querySelector('#screen'),touchControls=document.querySelector('.touch');

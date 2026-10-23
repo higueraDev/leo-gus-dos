@@ -79,7 +79,7 @@ Ejecuta `node tests/national-route.cjs` para comprobar colindancias de la ruta, 
 
 Al perder todas las vidas o completar el recorrido se guarda un registro local independiente de la partida, con kilómetros de aventura, monedas ganadas, monedas gastadas, saldo final, especies únicas observadas y entidades completadas. Se conservan las últimas 20 expediciones en este navegador y dispositivo, ordenadas por entidades completadas, especies únicas, distancia y monedas ganadas. Empezar otra partida no borra el historial.
 
-La escala de distancia es de 1000 píxeles de avance nuevo = 1 km del juego, no kilómetros reales de carretera. Retroceder, reaparecer, teletransportarse al mástil o cambiar de nivel no añade distancia. La lupa registra cada uno de los cuatro tipos de fauna una sola vez por expedición, aunque observar distintos individuos sigue pagando monedas. Comprar equipo reduce el saldo pero conserva el total de monedas ganadas.
+La escala de distancia es de 1000 píxeles de avance nuevo = 1 km del juego, no kilómetros reales de carretera. Retroceder, reaparecer, teletransportarse al mástil o cambiar de nivel no añade distancia. La lupa registra cada uno de los tipos de fauna una sola vez por expedición, aunque observar distintos individuos sigue pagando monedas. Comprar equipo reduce el saldo pero conserva el total de monedas ganadas.
 
 El resumen de victoria concede el reconocimiento del juego «Guardianes de México» cuando se han completado las 32 entidades, por explorar respetando la flora y fauna. Las partidas antiguas recuperan las entidades y datos disponibles y se marcan como registros parciales, sin inventar observaciones pasadas. Los datos nuevos se conservan al guardar y continuar.
 
@@ -87,9 +87,9 @@ Ejecuta `node tests/expedition-records.cjs` para comprobar métricas, deduplicac
 
 ### Cuaderno y binoculares
 
-El cuaderno está disponible desde el inicio: tecla **N** o botón CUADERNO. Acércate en tierra a los letreros FLORA y VISTA para registrar vegetación y paisaje; cada ficha paga 3 monedas una sola vez por estado. La lupa del equipo explorador registra fauna en el mismo cuaderno sin cambiar el conteo de especies únicas. Los nombres de vegetación son categorías del escenario, no un catálogo botánico.
+El cuaderno está disponible desde el inicio: tecla **N** o botón CUADERNO. Con los binoculares comprados, acércate en tierra a los letreros FLORA y VISTA para registrar vegetación y paisaje; cada ficha paga 3 monedas una sola vez por estado. La lupa del equipo explorador registra fauna en el mismo cuaderno sin cambiar el conteo de especies únicas. Los nombres de vegetación son categorías del escenario, no un catálogo botánico.
 
-Los binoculares cuestan **12 monedas** en un bloque amarillo de cada nivel. Usa **B** o el botón BINOCULARES para ver el camino por delante. Ambas consultas detienen la acción y el tiempo; VOLVER o Escape reanuda. El equipo y las fichas se conservan entre estados, al perder una vida y al recuperar la partida. Las partidas anteriores siguen siendo compatibles.
+Los binoculares cuestan **12 monedas** en un bloque amarillo antes de los puntos de observación de cada nivel. Se activan automáticamente al pasar a menos de 55 píxeles de FLORA o VISTA sobre el suelo: el personaje los levanta a los ojos durante 0.95 segundos, orientándose hacia el punto y bajándolos al terminar. Se mantiene el movimiento, la cámara habitual y el tiempo. Permanecer junto al punto no repite la activación; alejarse más de 85 píxeles permite observar de nuevo sin repetir la recompensa. La lupa tiene prioridad visual si se observa un animal al mismo tiempo. No es necesario presionar B ni un botón. Solo consultar el cuaderno detiene la acción; VOLVER o Escape reanuda. El equipo y las fichas se conservan entre estados, al perder una vida y al recuperar la partida. Las partidas anteriores siguen siendo compatibles.
 
 Validación adicional: `node tests/field-tools.cjs`.
 
