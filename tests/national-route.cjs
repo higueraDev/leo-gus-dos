@@ -43,7 +43,7 @@ for(const version of [1,2]){
  hero='leo';level=3;player=null;setup();state='play';lives=3;coins=37;saveGame(false);const data=readSave();data.version=version;data.level=3;data.score=1234;delete data.regionId;delete data.world;
  localStorage.setItem(SAVE_KEY,JSON.stringify(data));continueGame();
  check(region().id==='chih'&&level===7&&world===4380&&coins===37,'legacy Chihuahua maps to new position');
- check(saveGame(false)&&readSave().version===3&&readSave().regionId==='chih'&&readSave().world===4380,'legacy geometry survives upgrade');
+ check(saveGame(false)&&readSave().version===4&&readSave().regionId==='chih'&&readSave().world===4380,'legacy geometry survives upgrade');
 }
 level=32;player=null;setup();state='play';saveGame(false);let data=readSave();data.regionId='bcs';check(!validSave(data),'reject inconsistent entity identity');data=readSave();data.level=33;check(!validSave(data),'reject non-existent level');
 console.log(checks+' national route checks passed.');

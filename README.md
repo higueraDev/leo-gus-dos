@@ -71,6 +71,16 @@ Baja California Sur → Baja California → Sonora → Sinaloa → Nayarit → D
 
 Cada etapa varía la altura de las plataformas y la posición de los huecos con saltos alcanzables, además de tener nombre, referencias visuales y un ambiente de costa, desierto, bosque, sierra, campo, ciudad, volcán, selva o humedal. Las longitudes se mantienen entre 3860 y 4220 píxeles y el tiempo se reinicia en cada etapa. La ruta desplegable marca la entidad actual y las anteriores; la aventura termina al completar Quintana Roo.
 
-Los guardados usan una identidad de entidad y versión 3. Una partida antigua en el nivel 3 se restaura en Chihuahua (ahora etapa 7), conservando monedas, posición, objetos y la longitud del mapa anterior.
+Los guardados usan una identidad de entidad; la versión 4 conserva también las métricas de la expedición. Una partida antigua en el nivel 3 se restaura en Chihuahua (ahora etapa 7), conservando monedas, posición, objetos y la longitud del mapa anterior.
 
 Ejecuta `node tests/national-route.cjs` para comprobar colindancias de la ruta, los 32 guardados, transiciones, plataformas alcanzables con ambos personajes y la migración de Chihuahua.
+
+## Marcador y resumen final
+
+Al perder todas las vidas o completar el recorrido se guarda un registro local independiente de la partida, con kilómetros de aventura, monedas ganadas, monedas gastadas, saldo final, especies únicas observadas y entidades completadas. Se conservan las últimas 20 expediciones en este navegador y dispositivo, ordenadas por entidades completadas, especies únicas, distancia y monedas ganadas. Empezar otra partida no borra el historial.
+
+La escala de distancia es de 1000 píxeles de avance nuevo = 1 km del juego, no kilómetros reales de carretera. Retroceder, reaparecer, teletransportarse al mástil o cambiar de nivel no añade distancia. La lupa registra cada uno de los cuatro tipos de fauna una sola vez por expedición, aunque observar distintos individuos sigue pagando monedas. Comprar equipo reduce el saldo pero conserva el total de monedas ganadas.
+
+El resumen de victoria concede el reconocimiento del juego «Guardianes de México» cuando se han completado las 32 entidades, por explorar respetando la flora y fauna. Las partidas antiguas recuperan las entidades y datos disponibles y se marcan como registros parciales, sin inventar observaciones pasadas. Los datos nuevos se conservan al guardar y continuar.
+
+Ejecuta `node tests/expedition-records.cjs` para comprobar métricas, deduplicación, saldo, persistencia, reinicio, historial, migración y reconocimiento.

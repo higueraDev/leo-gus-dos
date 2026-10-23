@@ -3,8 +3,71 @@ const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),overla
 const keys={};let hero='leo',state='menu',level=1,lives=3,coins=0,timer=180,camera=0,last=0,clock=0,muted=false,audio,platforms=[],gold=[],enemies=[],particles=[],items=[],notice=null,player,world=3600,goal=null;
 const POLE_TOP=220,POLE_BOTTOM=416;
 const SHOP_ITEMS={red:{name:'HONGO ROJO',price:5},star:{name:'EXPLORADOR',price:10},feather:{name:'PARAPENTE',price:20},green:{name:'VIDA EXTRA',price:15}};
+const RECORDS_KEY='higueradev.leo-gus.expeditions.v1';
+const SPECIES_NAMES={turtle:'Tortuga',crab:'Cangrejo',snake:'Serpiente de cascabel',scorpion:'Alacrán'};
+let expedition=freshExpedition();
+function freshExpedition(){return {startedAt:Date.now(),progress:{},completedRegions:[],species:[],earnedCoins:0,spentCoins:0,partial:false};}
+function expeditionKm(){return Object.values(expedition.progress).reduce((total,value)=>total+value,0)/1000;}
+function recordTravel(x){
+ if(state!=='play')return;
+ const id=region().id,progress=Math.max(0,Math.min(world-135-player.w,x)-60);
+ expedition.progress[id]=Math.max(expedition.progress[id]||0,progress);
+}
+function earnCoins(amount){coins+=amount;expedition.earnedCoins+=amount;}
+function validExpedition(data){
+ const integer=n=>Number.isSafeInteger(n)&&n>=0,unique=(list,allowed)=>Array.isArray(list)&&list.length<=allowed.length&&new Set(list).size===list.length&&list.every(value=>allowed.includes(value));
+ const ids=REGIONS.map(r=>r.id);
+ return data&&Number.isFinite(data.startedAt)&&data.startedAt>0&&typeof data.partial==='boolean'&&integer(data.earnedCoins)&&integer(data.spentCoins)&&unique(data.species,Object.keys(SPECIES_NAMES))&&unique(data.completedRegions,ids)&&data.progress&&typeof data.progress==='object'&&!Array.isArray(data.progress)&&Object.entries(data.progress).every(([id,value])=>ids.includes(id)&&Number.isFinite(value)&&value>=0&&value<=13000);
+}
+function restoreExpedition(data){
+ if(data.version>=4)return JSON.parse(JSON.stringify(data.expedition));
+ const restored=freshExpedition(),stage=savedStage(data),legacy=['bcs','bc','chih'];
+ const oldChihuahua=data.regionId==='chih'&&data.world===4380;
+ restored.completedRegions=data.version<3?legacy.slice(0,data.level-1):oldChihuahua?legacy.slice(0,2):REGIONS.slice(0,stage-1).map(r=>r.id);
+ for(const id of restored.completedRegions){const index=REGIONS.findIndex(r=>r.id===id);restored.progress[id]=levelLength(index+1)-219;}
+ const width=data.version<3?3600+data.level*260:data.world;
+ restored.progress[REGIONS[stage-1].id]=Math.max(0,Math.min(width-159,data.player.x)-60);
+ restored.species=[...new Set(data.enemies.filter(e=>e.observed).map(e=>e.kind==='shell'?'turtle':e.kind))];
+ restored.earnedCoins=data.coins;restored.partial=true;return restored;
+}
+function validRecord(record){
+ const date=record&&record.endedAt;
+ return record&&typeof record.id==='string'&&record.id.length<100&&Number.isFinite(date)&&date>0&&date<=8640000000000000&&['leo','gus'].includes(record.hero)&&typeof record.won==='boolean'&&Number.isFinite(record.km)&&record.km>=0&&record.km<=1000&&Number.isSafeInteger(record.balance)&&record.balance>=0&&validExpedition(record.expedition);
+}
+function readRecords(){
+ try{const raw=localStorage.getItem(RECORDS_KEY);if(!raw||raw.length>200000)return [];const list=JSON.parse(raw);return Array.isArray(list)?list.filter(validRecord).slice(0,20):[];}catch{return [];}
+}
+function renderRecords(){
+ const records=readRecords().sort((a,b)=>b.expedition.completedRegions.length-a.expedition.completedRegions.length||b.expedition.species.length-a.expedition.species.length||b.km-a.km||b.expedition.earnedCoins-a.expedition.earnedCoins||b.endedAt-a.endedAt);
+ document.querySelector('#records-empty').hidden=records.length>0;
+ document.querySelector('#records-body').innerHTML=records.map((record,index)=>'<tr><td>'+(index+1)+'</td><td>'+record.hero.toUpperCase()+'<small>'+new Date(record.endedAt).toLocaleDateString('es-MX')+' · '+(record.won&&record.expedition.completedRegions.length===32?'Guardianes de México':record.won?'Completada':'Finalizada')+(record.expedition.partial?' · Parcial':'')+'</small></td><td>'+record.km.toFixed(2)+'</td><td>'+record.expedition.earnedCoins+'<small>Saldo: '+record.balance+'</small></td><td>'+record.expedition.species.length+'</td><td>'+record.expedition.completedRegions.length+'/32</td></tr>').join('');
+}
+function saveResult(won){
+ const record={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9),endedAt:Date.now(),hero,won,km:Number(expeditionKm().toFixed(3)),balance:coins,expedition:JSON.parse(JSON.stringify(expedition))};
+ try{localStorage.setItem(RECORDS_KEY,JSON.stringify([record,...readRecords()].slice(0,20)));record.persisted=true;}catch{record.persisted=false;}
+ renderRecords();return record;
+}
+function showResult(record){
+ const data=record.expedition,complete=record.won&&data.completedRegions.length===REGIONS.length;
+ document.querySelector('#result-km').textContent=record.km.toFixed(2);
+ document.querySelector('#result-coins').textContent=String(data.earnedCoins);
+ document.querySelector('#result-species').textContent=String(data.species.length);
+ document.querySelector('#result-balance').textContent='Saldo final: '+record.balance+' · Gastadas en equipo: '+data.spentCoins;
+ document.querySelector('#result-regions').textContent='Entidades completadas: '+data.completedRegions.length+' / '+REGIONS.length;
+ document.querySelector('#result-species-list').textContent=data.species.length?'Especies observadas: '+data.species.map(kind=>SPECIES_NAMES[kind]).join(' · '):'Aún no se registraron especies con la lupa.';
+ document.querySelector('#result-recognition').textContent=complete?'Por explorar las 32 entidades de México respetando la flora y fauna de cada región.':record.won?'Llegaste al Caribe. Cada región explorada y cada animal observado forman parte de tu aventura.':'Tu expedición terminó en '+region().name+'. Gracias por recorrer México y observar su fauna sin dañarla.';
+ document.querySelector('#result-badge').hidden=!complete;
+ document.querySelector('#result-storage').textContent=(record.persisted?'Marcador guardado en este navegador.':'No se pudo guardar el marcador en este navegador.')+(data.partial?' Los registros anteriores a esta versión son parciales.':'');
+ document.querySelector('#expedition-summary').hidden=false;
+ document.querySelector('.characters').hidden=true;
+ document.querySelector('.tag').textContent='RESUMEN DE EXPEDICIÓN';
+ document.querySelector('#screen').classList.add('has-result');
+}
+function chooseHero(){
+ state='menu';document.querySelector('#screen').classList.remove('has-result');document.querySelector('#expedition-summary').hidden=true;document.querySelector('.characters').hidden=false;document.querySelector('.tag').textContent='SELECCIONAR JUGADOR';document.querySelector('#message').textContent='ELIGE A TU HERMANO Y COMIENZA LA AVENTURA';document.querySelector('#start').innerHTML='[ EJECUTAR ] <span>ENTER ↵</span>';
+}
 function flagCoins(y){const height=Math.max(0,Math.min(1,(POLE_BOTTOM-y)/(POLE_BOTTOM-POLE_TOP)));return height>=.95?50:height>=.7?20:height>=.45?8:height>=.2?4:1;}
-function captureFlag(){if(state!=='play')return;const bonus=flagCoins(player.y),timeBonus=Math.max(0,Math.floor(timer/10));coins+=bonus+timeBonus;goal={bonus,timeBonus,elapsed:0,flagY:227};state='goal';player.x=world-135-player.w;player.vx=0;player.vy=0;document.querySelector('#pause').style.display='none';beep(800,.3);}
+function captureFlag(){if(state!=='play')return;recordTravel(player.x);if(!expedition.completedRegions.includes(region().id))expedition.completedRegions.push(region().id);const bonus=flagCoins(player.y),timeBonus=Math.max(0,Math.floor(timer/10));earnCoins(bonus+timeBonus);goal={bonus,timeBonus,elapsed:0,flagY:227};state='goal';player.x=world-135-player.w;player.vx=0;player.vy=0;document.querySelector('#pause').style.display='none';beep(800,.3);}
 const sprites={leo:['0000hhhh0000','000hhhhhh000','00hhhssks000','0hshsssksss0','0hshhssskss0','00hsssskkk00','000ssssss000','00rrccrr0000','0rrrdrrrrrr0','rrrrdrrrrrrr','ssrrdrrrrrss','sssppyyppsss','00ttuttutt00','00ttt00ttt00','0ooo0000ooo0','oooo0000oooo']};
 const walkFrames=[
  ['00rrccrr0000','0rrrdrrrrr00','ssrrdrrrrrr0','ssrrppyyppss','00tttttt00ss','0tttutttt000','0ttt000ttt00','oooo0000oo00','ooo00000oooo'],
@@ -73,16 +136,16 @@ function stageGaps(){return [[780,890],[1650,1770],[2650,2780]].map(([a,b],index
 function syncJourney(){document.querySelectorAll('[data-region]').forEach((node,index)=>{node.classList.toggle('visited',index<level-1);if(index===level-1)node.setAttribute('aria-current','step');else node.removeAttribute('aria-current');});}
 function heroHeight(big=false){return (hero==='gus'?38:32)*(big?1.5:1);}
 function setup(){const retained=player?{big:player.big,cape:player.cape,star:player.star}:{};goal=null;items=[];notice=null;world=levelLength(level);platforms=[];gold=[];enemies=[];particles=[];const gaps=stageGaps();let start=0;for(const [a,b]of gaps){platforms.push({x:start,y:416,w:a-start,h:64,type:'ground'});start=b}platforms.push({x:start,y:416,w:world-start,h:64,type:'ground'});for(let i=0;i<13;i++){const {x,y,w}=stagePlatform(i);for(let offset=0;offset<w;offset+=32)platforms.push({x:x+offset,y,w:32,h:24,type:'brick'});for(let j=0;j<3;j++)gold.push({x:x+j*30+14,y:y-32,taken:false});if(i%2===0)platforms.push({x:x+32,y:y-105,w:32,h:32,type:'question',used:false,item:['red','star','feather','green'][(i/2)%4]})}if(region().id==='bcs')enemies.push({x:230,y:384,w:24,h:32,vx:0,vy:0,kind:'turtle',alive:true,age:0,direction:1,homeMin:180,homeMax:270});spawnRegionalEnemies();for(let x=130;x<world-180;x+=120)if(!gaps.some(([a,b])=>x>a-20&&x<b+20))gold.push({x,y:365,taken:false});player={x:60,y:380,w:24,h:32,vx:0,vy:0,on:false,jumps:0,jumpHeld:false,walkDistance:0,inv:1.2,big:false,cape:false,star:0,flight:6,...retained};player.h=heroHeight(player.big);player.y=412-player.h;camera=0;timer=180;clock=0;notice={text:region().name+' · '+region().caption,time:4};syncJourney();}
-function begin(){document.querySelector('#screen').classList.add('is-playing');coins=0;lives=3;level=1;player=null;setup();state='play';overlay.style.display='none';document.querySelector('#pause').style.display='block';pauseLayer.hidden=true;musicStep=0;nextNote=0;if(!muted)ensureAudio();syncSound();beep(440);saveGame(false)}
+function begin(){expedition=freshExpedition();document.querySelector('#screen').classList.remove('has-result');document.querySelector('#expedition-summary').hidden=true;document.querySelector('.characters').hidden=false;document.querySelector('.tag').textContent='SELECCIONAR JUGADOR';document.querySelector('#screen').classList.add('is-playing');coins=0;lives=3;level=1;player=null;setup();state='play';overlay.style.display='none';document.querySelector('#pause').style.display='block';pauseLayer.hidden=true;musicStep=0;nextNote=0;if(!muted)ensureAudio();syncSound();beep(440);saveGame(false)}
 function die(){lives--;beep(130,.3,'sawtooth');if(lives<=0){finish(false);return}player.x=Math.max(60,player.x-160);player.y=200;player.vx=0;player.vy=0;player.inv=2;player.big=false;player.cape=false;player.star=0;player.h=heroHeight();player.on=false;player.jumps=1;}
-function finish(win){clearSave();document.querySelector('#screen').classList.remove('is-playing');state='end';overlay.style.display='flex';document.querySelector('#message').textContent=win?'¡AVENTURA COMPLETADA! · '+coins+' MONEDAS':'FIN DE LA PARTIDA · '+coins+' MONEDAS';document.querySelector('#start').innerHTML='↻ VOLVER A JUGAR <span>ENTER ↵</span>';document.querySelector('#pause').style.display='none';}
+function finish(win){if(state==='end')return;const result=saveResult(win);clearSave();document.querySelector('#screen').classList.remove('is-playing');state='end';overlay.style.display='flex';document.querySelector('#message').textContent=win?'¡AVENTURA COMPLETADA!':'FIN DE LA EXPEDICIÓN';showResult(result);document.querySelector('#start').innerHTML='↻ NUEVA EXPEDICIÓN <span>ENTER ↵</span>';document.querySelector('#pause').style.display='none';}
 function pause(){if(state==='play'){state='pause';pauseLayer.hidden=false;saveGame(false)}else if(state==='pause'){state='play';pauseLayer.hidden=true}scheduleMusic();}
 function breakBrick(block){block.broken=true;beep(160,.12,'sawtooth');for(let i=0;i<4;i++)particles.push({type:'debris',x:block.x+(i%2)*16+4,y:block.y+Math.floor(i/2)*12,vx:i%2?95:-95,vy:i<2?-240:-150,life:.75});}
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function update(dt){if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<REGIONS.length){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180}player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
-player.x+=player.vx*dt;for(const p of platforms)if(hit(player,p)){if(player.vx>0)player.x=p.x-player.w;else if(player.vx<0)player.x=p.x+p.w}player.x=Math.max(0,player.x);if(!player.on&&player.jumps===0)player.jumps=1;const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&player.vy>=0;if(flying){player.flight=Math.max(0,player.flight-dt);player.vy=Math.min(65,player.vy+180*dt)}else player.vy+=1350*dt;player.y+=player.vy*dt;player.on=false;for(const p of platforms)if(hit(player,p)){if(player.vy>0){player.y=p.y-player.h;player.vy=0;player.on=true;player.jumps=0;player.flight=6}else if(player.vy<0){player.y=p.y+p.h;player.vy=0;if(p.type==='brick'){breakBrick(p)}else if(p.type==='question'&&!p.used)purchaseBlock(p)}}platforms=platforms.filter(p=>!p.broken);if(player.y>520)die();
-for(const c of gold)if(!c.taken&&Math.abs(player.x+12-c.x)<23&&Math.abs(player.y+16-c.y)<29){c.taken=true;coins++;beep(900,.06)}
-if(player.on&&Math.abs(player.vx)>0)player.walkDistance=(player.walkDistance||0)+Math.abs(player.x-previousX);updateItems(dt);if(player.big&&player.h<heroHeight(true))resizePlayer(heroHeight(true));updateEnemies(dt,previousBottom);
+function update(dt){if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<REGIONS.length){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180;if(state!=='play')return;}player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
+player.x+=player.vx*dt;for(const p of platforms)if(hit(player,p)){if(player.vx>0)player.x=p.x-player.w;else if(player.vx<0)player.x=p.x+p.w}player.x=Math.max(0,player.x);recordTravel(player.x);if(!player.on&&player.jumps===0)player.jumps=1;const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&player.vy>=0;if(flying){player.flight=Math.max(0,player.flight-dt);player.vy=Math.min(65,player.vy+180*dt)}else player.vy+=1350*dt;player.y+=player.vy*dt;player.on=false;for(const p of platforms)if(hit(player,p)){if(player.vy>0){player.y=p.y-player.h;player.vy=0;player.on=true;player.jumps=0;player.flight=6}else if(player.vy<0){player.y=p.y+p.h;player.vy=0;if(p.type==='brick'){breakBrick(p)}else if(p.type==='question'&&!p.used)purchaseBlock(p)}}platforms=platforms.filter(p=>!p.broken);if(player.y>520){die();if(state!=='play')return;}
+for(const c of gold)if(!c.taken&&Math.abs(player.x+12-c.x)<23&&Math.abs(player.y+16-c.y)<29){c.taken=true;earnCoins(1);beep(900,.06)}
+if(player.on&&Math.abs(player.vx)>0)player.walkDistance=(player.walkDistance||0)+Math.abs(player.x-previousX);updateItems(dt);if(player.big&&player.h<heroHeight(true))resizePlayer(heroHeight(true));updateEnemies(dt,previousBottom);if(state!=='play')return;
 for(const p of particles){if(p.type==='debris'){p.x+=p.vx*dt;p.vy+=850*dt;p.y+=p.vy*dt}else p.y-=65*dt;p.life-=dt}particles=particles.filter(p=>p.life>0);camera=Math.max(0,Math.min(world-960,player.x-300));const poleX=world-135;if(Math.min(previousX,player.x)<=poleX+4&&Math.max(previousX+player.w,player.x+player.w)>=poleX&&player.y+player.h>=POLE_TOP&&player.y<=POLE_BOTTOM)captureFlag();player.x=Math.min(player.x,world-player.w);}
 function resizePlayer(height){const bottom=player.y+player.h,next={...player,y:bottom-height,h:height};if(height>player.h&&platforms.some(p=>hit(next,p)))return false;player.y=next.y;player.h=height;return true;}
 function hurt(){if(player.inv||player.star)return;lives--;if(lives<=0){finish(false);return;}player.inv=1.6;beep(180,.15);notice={text:'¡CUIDADO! DALE ESPACIO A LA FAUNA',time:1.6};}
@@ -91,7 +154,7 @@ function purchaseBlock(block){
  const kind=Object.hasOwn(SHOP_ITEMS,block.item)?block.item:'red',product=SHOP_ITEMS[kind];
  if((kind==='red'&&player.big)||(kind==='feather'&&player.cape)){notice={text:'YA TIENES '+product.name+' · CONSERVAS TUS MONEDAS',time:2};return false;}
  if(coins<product.price){notice={text:product.name+' · CUESTA '+product.price+' MONEDAS · TE FALTAN '+(product.price-coins),time:2};beep(180,.1);return false;}
- coins-=product.price;block.used=true;collectItem({kind});
+ coins-=product.price;expedition.spentCoins+=product.price;block.used=true;collectItem({kind});
  notice={text:'COMPRADO: '+product.name+' · −'+product.price+' MONEDAS',time:2};
  saveGame(false);return true;
 }
@@ -231,7 +294,8 @@ function examineEnemy(e){
  player.examineFacing=e.x+e.w/2<player.x+player.w/2?-1:1;
  const names={turtle:'TORTUGA',crab:'CANGREJO',snake:'SERPIENTE DE CASCABEL',scorpion:'ALACRÁN'};
  const first=!e.observed;e.observed=true;
- if(first)coins+=5;
+ if(!expedition.species.includes(e.kind))expedition.species.push(e.kind);
+ if(first)earnCoins(5);
  notice={text:'OBSERVANDO: '+names[e.kind]+(first?' · +5 MONEDAS':''),time:1.4};
  beep(660,.07,'triangle');
 }
@@ -454,7 +518,7 @@ ctx.save();ctx.translate(-Math.round(camera),0);for(const p of platforms){if(p.x
 for(const c of gold)if(!c.taken){const w=6+Math.abs(Math.sin(performance.now()/200+c.x))*5;rect(c.x-w/2,c.y-10,w,19,'#e9a93d');rect(c.x-w/2+2,c.y-8,3,14,'#ffe5a0')}
 for(const item of items)drawItem(item);for(const e of enemies)if(e.alive){if(e.kind==='turtle')drawTurtle(e);else drawRegionalEnemy(e);drawAnimalSleep(e);}
 const flag=world-135;rect(flag,220,4,196,'#ece4bd');rect(flag-4,213,12,12,'#e6c269');const flagY=goal?goal.flagY:227;rect(flag+4,flagY,49,31,hero==='leo'?'#568fc2':'#55b84c');ctx.fillStyle='#fff2d4';ctx.font='bold 17px monospace';ctx.fillText(hero==='leo'?'L':'G',flag+19,flagY+22);rect(world-80,352,70,64,'#b4a07b');rect(world-65,376,24,40,'#3b5147');for(let i=0;i<4;i++)rect(world-80+i*20,340,12,15,'#b4a07b');
-if(state==='menu'){sprite(sprites.leo,170,384,2);ctx.save();ctx.translate(205,378);ctx.scale(1,38/32);sprite(sprites.leo,0,0,2,true);ctx.restore()}else if(player&&(player.inv<=0||Math.floor(performance.now()/85)%2===0))drawPlayer();for(const p of particles)if(p.life>0){if(p.type==='debris'){rect(p.x,p.y,10,8,'#ad7952');rect(p.x,p.y,10,2,'#e0ad72')}}ctx.restore();if(state!=='menu'){drawHud(theme);if(player.star>0||player.cape||player.big){ctx.fillStyle='#ffdf79';ctx.font='bold 12px monospace';ctx.fillText(player.star>0?'EXPLORADOR · INMUNE '+Math.ceil(player.star)+'s':player.cape?'PARAPENTE · PLANEO '+Math.ceil(player.flight)+'s':'SUPER '+hero.toUpperCase(),26,75)}if(notice&&notice.time>0){rect(180,430,600,28,'#173c3bdd');ctx.textAlign='center';ctx.fillStyle='#ffdf79';ctx.font='bold 13px monospace';ctx.fillText(notice.text,480,449);ctx.textAlign='start'}}}
+if(state==='menu'){sprite(sprites.leo,170,384,2);ctx.save();ctx.translate(205,378);ctx.scale(1,38/32);sprite(sprites.leo,0,0,2,true);ctx.restore()}else if(player&&(player.inv<=0||Math.floor(performance.now()/85)%2===0))drawPlayer();for(const p of particles)if(p.life>0){if(p.type==='debris'){rect(p.x,p.y,10,8,'#ad7952');rect(p.x,p.y,10,2,'#e0ad72')}}ctx.restore();if(state!=='menu'){drawHud(theme);ctx.font='bold 12px monospace';ctx.fillStyle='#f5efce';ctx.fillText('ESPECIES '+expedition.species.length,795,75);if(player.star>0||player.cape||player.big){ctx.fillStyle='#ffdf79';ctx.font='bold 12px monospace';ctx.fillText(player.star>0?'EXPLORADOR · INMUNE '+Math.ceil(player.star)+'s':player.cape?'PARAPENTE · PLANEO '+Math.ceil(player.flight)+'s':'SUPER '+hero.toUpperCase(),26,75)}if(notice&&notice.time>0){rect(180,430,600,28,'#173c3bdd');ctx.textAlign='center';ctx.fillStyle='#ffdf79';ctx.font='bold 13px monospace';ctx.fillText(notice.text,480,449);ctx.textAlign='start'}}}
 function drawHeart(x,y,color='#f34d57'){
  const rows=['0110110','1111111','1111111','0111110','0011100','0001000'];
  rows.forEach((row,j)=>[...row].forEach((pixel,i)=>{if(pixel==='1')rect(x+i*3,y+j*3,3,3,color);}));
@@ -462,7 +526,7 @@ function drawHeart(x,y,color='#f34d57'){
 }
 function drawHud(theme){
  rect(0,0,960,61,'#173c3bf0');
- ctx.font='bold 13px monospace';ctx.fillStyle='#f5efce';ctx.fillText(hero.toUpperCase(),26,25);
+ ctx.font='bold 13px monospace';ctx.fillStyle='#f5efce';ctx.fillText(hero.toUpperCase(),26,25);ctx.font='bold 12px monospace';ctx.fillText(expeditionKm().toFixed(2)+' KM',26,45);
  ctx.font='bold 11px monospace';ctx.fillStyle='#ffdc79';ctx.fillText('SALDO · MONEDAS',180,17);
  rect(180,26,13,19,'#e9a93d');rect(183,28,3,14,'#ffe5a0');
  ctx.font='bold 24px monospace';ctx.fillText(String(coins),204,45);
@@ -480,7 +544,7 @@ let saveElapsed=0;
 const saveStatus=document.querySelector('#save-status'),continueButton=document.querySelector('#continue');
 function validSave(data){
  const finite=(n)=>typeof n==='number'&&Number.isFinite(n),box=o=>o&&['x','y','w','h'].every(k=>finite(o[k]))&&o.w>0&&o.h>0;
- return data&&[1,2,3].includes(data.version)&&['leo','gus'].includes(data.hero)&&Number.isInteger(data.level)&&data.level>=1&&data.level<=(data.version<3?3:REGIONS.length)&&(data.version<3||(data.regionId===REGIONS[data.level-1].id&&finite(data.world)&&data.world>=3500&&data.world<=13000))&&Number.isInteger(data.lives)&&data.lives>0&&data.lives<10000&&[data.coins,data.timer,data.clock,data.savedAt].every(finite)&&data.timer>0&&data.timer<=180&&Number.isInteger(data.coins)&&data.coins>=0&&box(data.player)&&['vx','vy','inv','star','flight','jumps'].every(k=>finite(data.player[k]))&&['big','cape','on'].every(k=>typeof data.player[k]==='boolean')&&['platforms','gold','enemies','items'].every(k=>Array.isArray(data[k])&&data[k].length<1000)&&data.platforms.every(p=>box(p)&&['ground','brick','question'].includes(p.type))&&data.gold.every(c=>c&&finite(c.x)&&finite(c.y))&&data.enemies.every(e=>box(e)&&finite(e.vx)&&finite(e.vy)&&['turtle','shell','crab','snake','scorpion'].includes(e.kind))&&data.items.every(i=>box(i)&&finite(i.vx)&&finite(i.vy)&&finite(i.age)&&['red','green','star','feather'].includes(i.kind));
+ return data&&[1,2,3,4].includes(data.version)&&['leo','gus'].includes(data.hero)&&Number.isInteger(data.level)&&data.level>=1&&data.level<=(data.version<3?3:REGIONS.length)&&(data.version<3||(data.regionId===REGIONS[data.level-1].id&&finite(data.world)&&data.world>=3500&&data.world<=13000))&&(data.version<4||validExpedition(data.expedition))&&Number.isInteger(data.lives)&&data.lives>0&&data.lives<10000&&[data.coins,data.timer,data.clock,data.savedAt].every(finite)&&data.timer>0&&data.timer<=180&&Number.isInteger(data.coins)&&data.coins>=0&&box(data.player)&&['vx','vy','inv','star','flight','jumps'].every(k=>finite(data.player[k]))&&['big','cape','on'].every(k=>typeof data.player[k]==='boolean')&&['platforms','gold','enemies','items'].every(k=>Array.isArray(data[k])&&data[k].length<1000)&&data.platforms.every(p=>box(p)&&['ground','brick','question'].includes(p.type))&&data.gold.every(c=>c&&finite(c.x)&&finite(c.y))&&data.enemies.every(e=>box(e)&&finite(e.vx)&&finite(e.vy)&&['turtle','shell','crab','snake','scorpion'].includes(e.kind))&&data.items.every(i=>box(i)&&finite(i.vx)&&finite(i.vy)&&finite(i.age)&&['red','green','star','feather'].includes(i.kind));
 }
 function readSave(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw||raw.length>500000)return null;const data=JSON.parse(raw);return validSave(data)?data:null;}catch{return null;}}
 function savedStage(data){return data.version<3?REGIONS.findIndex(r=>r.id===['bcs','bc','chih'][data.level-1])+1:data.level;}
@@ -489,7 +553,7 @@ function saveGame(manual=false){
  if(state!=='play'&&state!=='pause')return false;
  saveElapsed=0;
  try{
-  const data={version:3,regionId:region().id,world,savedAt:Date.now(),hero,level,lives,coins,timer,clock,player:{...player},platforms,gold,enemies,items};
+  const data={version:4,expedition,regionId:region().id,world,savedAt:Date.now(),hero,level,lives,coins,timer,clock,player:{...player},platforms,gold,enemies,items};
   if(!validSave(data))throw Error('Invalid state');localStorage.setItem(SAVE_KEY,JSON.stringify(data));
   saveStatus.textContent=manual?'Partida guardada.':'Guardado automático · '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   refreshContinue();return true;
@@ -498,12 +562,12 @@ function saveGame(manual=false){
 function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch{}continueButton.hidden=true;document.querySelector('#save-hint').textContent='Guardado local en este navegador y dispositivo.';saveStatus.textContent='Partida terminada.';}
 function continueGame(){
  const data=readSave();if(!data){saveStatus.textContent='No se encontró una partida compatible.';refreshContinue();return;}
- hero=data.hero;level=savedStage(data);lives=data.lives;coins=data.coins;timer=data.timer;clock=data.clock;
+ hero=data.hero;level=savedStage(data);expedition=restoreExpedition(data);lives=data.lives;coins=data.coins;timer=data.timer;clock=data.clock;
  player={...data.player};platforms=data.platforms;gold=data.gold;enemies=data.enemies.map(restoreAnimal);items=data.items;
  world=data.version<3?3600+data.level*260:data.world;camera=Math.max(0,Math.min(world-960,player.x-300));particles=[];goal=null;state='play';saveElapsed=0;syncJourney();
  Object.keys(keys).forEach(k=>keys[k]=false);player.jumpHeld=false;
  notice={text:'PARTIDA RECUPERADA · '+region().name,time:3};
- overlay.style.display='none';pauseLayer.hidden=true;document.querySelector('#screen').classList.add('is-playing');document.querySelector('#pause').style.display='block';
+ overlay.style.display='none';pauseLayer.hidden=true;document.querySelector('#screen').classList.remove('has-result');document.querySelector('#expedition-summary').hidden=true;document.querySelector('#screen').classList.add('is-playing');document.querySelector('#pause').style.display='block';
  document.querySelectorAll('[data-hero]').forEach(b=>{const chosen=b.dataset.hero===hero;b.classList.toggle('chosen',chosen);b.setAttribute('aria-pressed',String(chosen))});
  musicStep=0;nextNote=0;musicLevel=0;if(!muted)ensureAudio();syncSound();saveStatus.textContent='Partida recuperada.';
 }
@@ -516,6 +580,7 @@ document.querySelector('#save-pause').onclick=event=>{event.stopPropagation();sa
 continueButton.onclick=continueGame;
 window.addEventListener('pagehide',()=>saveGame(false));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame(false);});
+renderRecords();document.querySelector('#choose-hero').onclick=chooseHero;
 refreshContinue();
 
 setup();requestAnimationFrame(frame);document.querySelector('#start').onclick=begin;document.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>{hero=b.dataset.hero;document.querySelectorAll('[data-hero]').forEach(x=>{x.classList.toggle('chosen',x===b);x.setAttribute('aria-pressed',String(x===b))})});document.querySelector('#pause').onclick=pause;pauseLayer.onclick=pause;document.querySelector('#sound').onclick=()=>{muted=!muted;if(!muted)ensureAudio();syncSound();beep(600)};syncSound();document.addEventListener('visibilitychange',scheduleMusic);window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!e.repeat){if(e.code==='Enter'&&(state==='menu'||state==='end'))begin();if(e.code==='KeyP'||e.code==='Escape')pause();if(e.code==='KeyR'&&state!=='menu')begin()}keys[e.code]=true});window.addEventListener('keyup',e=>keys[e.code]=false);window.addEventListener('blur',()=>{Object.keys(keys).forEach(k=>keys[k]=false);if(state==='play')pause()});document.querySelectorAll('[data-key]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys[b.dataset.key]=true};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>keys[b.dataset.key]=false});
