@@ -15,7 +15,6 @@ openField('binoculars');check(fieldMode===null,'manual binocular panel removed')
 earnCoins(12);const block=platforms.find(p=>p.item==='binoculars');
 check(block.x<flora.x&&flora.x<view.x,'binocular shop before observation points');
 check(purchaseBlock(block)&&coins===0&&expedition.binoculars,'purchase equipment');
-check(document.querySelector('#binoculars').textContent.includes('AUTO'),'automatic equipment status');
 const duplicate={...block,used:false};earnCoins(12);check(!purchaseBlock(duplicate)&&coins===12&&!duplicate.used,'owned equipment never charged again');
 player.x=flora.x-30;player.on=true;discoverField();check(player.survey===.95&&player.surveyFacing===1&&coins===15&&expedition.journal.bcs.length===1,'automatic flora observation and reward');
 player.survey=.4;discoverField();check(player.survey===.4&&coins===15,'standing nearby does not retrigger or farm coins');

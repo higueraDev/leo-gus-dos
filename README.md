@@ -96,3 +96,5 @@ Validación adicional: `node tests/field-tools.cjs`.
 ### Fauna por región
 
 14 tipos de animales y 4–5 tipos distintos por nivel, con 7–10 ejemplares y cantidades diferentes según el ambiente representado. El cuaderno muestra los encuentros previstos. Las frecuencias son una adaptación jugable de hábitats, no un censo estatal. Ver [selección, cantidades y fuentes](FAUNA.md). Pruebas: `node tests/regional-fauna.cjs`.
+
+Los controles de movimiento, cuaderno, guardado y pantalla completa se ocultan en el menú y en los resúmenes de derrota o victoria, también en modo inmersivo. En pausa o al consultar el cuaderno se ocultan movimiento y herramientas; el botón para salir de pantalla completa permanece disponible. Los binoculares no tienen control ni indicador manual: su uso es automático.

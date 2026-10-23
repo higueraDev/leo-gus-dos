@@ -31,4 +31,6 @@ main,.arcade,.screen{min-width:0;max-width:100%}.screen canvas{max-width:100%;ob
 
 @media(max-width:600px){.screen.is-playing:not(.immersive):has(#field-panel:not([hidden])){min-height:340px}}
 
-.field-equipment{align-self:center;color:#d5c99e;font:700 10px monospace;padding:5px;border:1px solid #827b58}.field-tools{align-items:center}
+
+.touch[hidden],.field-tools[hidden],#save[hidden],#full[hidden],#pause[hidden]{display:none!important}
+.screen.immersive.has-result #overlay{padding-top:62px}
