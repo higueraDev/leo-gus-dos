@@ -18,7 +18,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 - Flechas o A/D: movimiento.
 - Espacio, flecha arriba o W: salto. Suelta y vuelve a pulsar para doble salto.
-- Con parapente: mantén salto en el aire para desplegarlo y volar durante un máximo de 6 segundos; la energía se recarga al aterrizar.
+- Con parapente: mantén salto al caer para desplegarlo y planear descendiendo a un máximo de 65 píxeles por segundo durante 6 segundos; conserva la subida normal del salto y no permite ganar altura; la energía se recarga al aterrizar.
 - P: pausa; R: reinicia la partida.
 - Controles táctiles en móvil, también flotantes en pantalla completa.
 - El botón de sonido controla música y efectos.

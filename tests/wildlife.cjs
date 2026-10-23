@@ -75,11 +75,11 @@ for(const selected of ['leo','gus'])for(const kind of ['turtle','crab','snake','
 for(const selected of ['leo','gus']){
  e=reset('crab',selected);player.x=60;enemies=[];collectItem({kind:'feather'});
  check(player.cape&&player.flight===6&&notice.text.includes('PARAPENTE'),'paraglider pickup equips six seconds');
- player.on=false;player.y=250;player.vy=80;keys.Space=true;update(.025);check(player.flight<6&&player.vy<80,'holding jump deploys flight');
+ player.on=false;player.y=250;player.vy=80;player.jumpHeld=true;player.jumps=2;keys.Space=true;update(.025);check(player.flight<6&&player.vy<80,'holding jump deploys flight');
  const usedFlight=player.flight;keys.Space=false;update(.025);check(player.flight===usedFlight,'release stops consuming flight');
  state='pause';update(.1);check(player.flight===usedFlight,'pause preserves flight');state='play';
  player.on=false;player.y=416-player.h-1;player.vy=100;update(.025);check(player.on&&player.flight===6,'landing refills flight');
- player.on=false;player.y=50;player.vy=-200;keys.Space=true;update(.025);check(player.y>=65+47*player.h/32,'open canopy stays below HUD');
+ player.on=false;player.y=50;player.vy=0;player.jumpHeld=true;keys.Space=true;update(.025);check(player.y>50&&player.y<51,'gliding descends without teleporting at top of screen');
  player.on=false;player.y=250;player.vy=0;player.jumpHeld=true;player.flight=.01;update(.025);check(player.flight===0,'flight energy cannot be negative');
  player.flight=2.3;saveGame(false);continueGame();check(player.cape&&player.flight===2.3,'legacy cape save retains paraglider and energy');
 }
@@ -105,6 +105,16 @@ reset();const pausedShop={x:300,y:300,w:32,h:32,type:'question',used:false,item:
 for(const kind of ['red','feather']){
  reset();coins=50;player.big=kind==='red';player.cape=kind==='feather';const owned={x:300,y:300,w:32,h:32,type:'question',used:false,item:kind};
  check(!purchaseBlock(owned)&&coins===50&&!owned.used,'owned equipment cannot waste coins');
+}
+for(const selected of ['leo','gus'])for(const fps of [30,60,120]){
+ reset('crab',selected);platforms=[];enemies=[];gold=[];player.x=100;player.y=100;player.on=false;player.vy=500;player.cape=true;player.flight=6;player.jumpHeld=true;player.jumps=2;keys.Space=true;keys.ArrowRight=true;
+ const startX=player.x,startY=player.y;
+ for(let frame=0;frame<fps*2;frame++)update(1/fps);
+ check(player.y>startY&&player.y<=startY+131,'gliding always descends slowly at '+fps+' fps');
+ check(player.x>startX&&Math.abs(player.flight-4)<.001,'horizontal control and duration retained');
+ keys.Space=false;const descent=player.vy;update(1/fps);check(player.vy>descent,'release restores gravity');
+ keys.Space=true;player.jumpHeld=true;player.flight=0;player.vy=100;update(1/fps);check(player.vy>100,'empty glider cannot slow fall');
+ player.y=200;player.vy=-300;player.flight=6;const energy=player.flight;update(1/fps);check(player.y<200&&player.vy>-300&&player.flight===energy,'rising jump remains ballistic and consumes no glide energy');
 }
 console.log(checks+' wildlife checks passed.');
 `,sandbox);
