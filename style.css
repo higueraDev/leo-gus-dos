@@ -34,3 +34,5 @@ main,.arcade,.screen{min-width:0;max-width:100%}.screen canvas{max-width:100%;ob
 
 .touch[hidden],.field-tools[hidden],#save[hidden],#full[hidden],#pause[hidden]{display:none!important}
 .screen.immersive.has-result #overlay{padding-top:62px}
+
+#music-status{font-size:11px;line-height:1.5;color:#e7cc87;margin:10px 0;overflow-wrap:anywhere}#music-status[hidden]{display:none!important}

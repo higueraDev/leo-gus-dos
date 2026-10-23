@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-32 niveles, uno por cada entidad federativa de México, en una ruta continua entre entidades vecinas desde Baja California Sur hasta Quintana Roo, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), parapente con mochila y arnés y hongo verde.
+32 niveles, uno por cada entidad federativa de México, en una ruta continua entre entidades vecinas desde Baja California Sur hasta Quintana Roo, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música instrumental sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), parapente con mochila y arnés y hongo verde.
 
 ## Archivos
 
@@ -49,7 +49,7 @@ Fauna: una tortuga de recorrido lento en la primera zona costera de BCS, cangrej
 
 Saltar sobre un animal produce un rebote suave sin dañarlo y lo duerme durante 4 segundos. Mientras duerme cierra los ojos, muestra «Zz», permanece quieto y no causa daño por contacto. Después retoma su recorrido; se puede observar dormido y su sueño se conserva al guardar. Un choque lateral quita un corazón, separa al jugador sin empujarlo al precipicio y concede 1.6 segundos de protección; los poderes se conservan. En modo explorador se atraviesa y observa la fauna sin daño y cada primera observación paga 5 monedas. No hay eliminaciones, patadas ni caparazones como proyectiles. Los caparazones de partidas anteriores vuelven a ser tortugas conservando sus observaciones.
 
-Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (2/4), corrido fronterizo (3/4) y polca chihuahuense (2/4), compartidas por las etapas según su ambiente. No requieren descargar audio.
+Música: arreglos folklóricos de videojuego en 10 niveles y temas originales provisionales en los 22 restantes. El tema cambia con el nivel, se muestra su nombre y se detiene al pausar o abrir el cuaderno. No requiere descargar audio. Repertorio, fuentes y pendientes en [MUSICA.md](MUSICA.md).
 
 Guardado: botón GUARDAR, opción en pausa y guardado automático cada 5 segundos, al pausar y al ocultar la página. CONTINUAR restaura nivel, personaje, posición, enemigos, bloques, monedas, tiempo, vidas y poderes. Una partida por navegador y dispositivo mediante localStorage, también sin conexión. Nueva partida reemplaza el guardado; terminar la aventura o perder todas las vidas lo elimina.
 
