@@ -92,3 +92,7 @@ El cuaderno está disponible desde el inicio: tecla **N** o botón CUADERNO. Ac�
 Los binoculares cuestan **12 monedas** en un bloque amarillo de cada nivel. Usa **B** o el botón BINOCULARES para ver el camino por delante. Ambas consultas detienen la acción y el tiempo; VOLVER o Escape reanuda. El equipo y las fichas se conservan entre estados, al perder una vida y al recuperar la partida. Las partidas anteriores siguen siendo compatibles.
 
 Validación adicional: `node tests/field-tools.cjs`.
+
+### Fauna por región
+
+14 tipos de animales y 4–5 tipos distintos por nivel, con 7–10 ejemplares y cantidades diferentes según el ambiente representado. El cuaderno muestra los encuentros previstos. Las frecuencias son una adaptación jugable de hábitats, no un censo estatal. Ver [selección, cantidades y fuentes](FAUNA.md). Pruebas: `node tests/regional-fauna.cjs`.

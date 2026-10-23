@@ -29,7 +29,7 @@ localStorage.removeItem(RECORDS_KEY);resetRun();expedition.species=Object.keys(S
 for(let stage=1;stage<=32;stage++){level=stage;player=null;setup();state='play';player.x=world-159;captureFlag();update(2.7);}
 records=readRecords();const fullDistance=REGIONS.reduce((sum,r,index)=>sum+levelLength(index+1)-219,0)/1000;
 check(records.length===1&&records[0].won&&records[0].expedition.completedRegions.length===32,'full journey saved with all entities');
-check(Math.abs(records[0].km-fullDistance)<.001&&records[0].expedition.species.length===4,'full distance and distinct species saved');
+check(Math.abs(records[0].km-fullDistance)<.001&&records[0].expedition.species.length===Object.keys(SPECIES_NAMES).length,'full distance and distinct species saved');
 check(!document.querySelector('#result-badge').hidden&&document.querySelector('#result-recognition').textContent.includes('flora y fauna'),'full journey receives ecological recognition');
 const allEarned=records[0].expedition.earnedCoins;check(allEarned>0&&allEarned===records[0].balance,'flag rewards count as income');
 resetRun();coins=12;enemies.forEach(e=>e.observed=true);saveGame(false);const old=readSave();old.version=3;delete old.expedition;localStorage.setItem(SAVE_KEY,JSON.stringify(old));continueGame();check(expedition.partial&&expedition.earnedCoins===12&&new Set(expedition.species).size===expedition.species.length,'legacy statistics marked partial and deduplicated');
