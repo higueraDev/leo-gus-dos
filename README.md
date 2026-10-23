@@ -25,7 +25,7 @@ Abre http://localhost:8000. Para publicar, sirve estos archivos estáticos media
 
 ## Características
 
-Tres niveles ambientados en Baja California Sur, Baja California y Chihuahua, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), parapente con mochila y arnés y hongo verde.
+32 niveles, uno por cada entidad federativa de México, en una ruta continua entre entidades vecinas desde Baja California Sur hasta Quintana Roo, con flora, fauna y elementos regionales en el fondo; selección de Leo o Gus con camisas de campo azul y verde, pañuelo, pantalón cargo, cinturón y botas, monedas, ladrillos rompibles, fauna que se esquiva y observa, banderas con bonificación según la altura, música original sintetizada y cuatro poderes: hongo rojo, equipo explorador (casco, chaleco y 12 segundos de inmunidad; examina animales con lupa sin dañarlos y recibe 5 monedas extra por la primera observación de cada uno), parapente con mochila y arnés y hongo verde.
 
 ## Archivos
 
@@ -45,11 +45,11 @@ URL: https://higueradev.github.io/leo-gus-dos/
 
 El manifiesto usa rutas relativas para funcionar bajo `/leo-gus-dos/`. El despliegue incluye únicamente los archivos del juego.
 
-Fauna: una tortuga de recorrido lento en la primera zona costera de BCS, cangrejos en BCS, serpientes de cascabel en Baja California y alacranes en Chihuahua. Los animales patrullan espacios delimitados lejos de los bordes de precipicios y de las zonas de aterrizaje bajo los ladrillos; hacen pausas y no persiguen al jugador. La serpiente agita la cola antes de avanzar. Son comportamientos de juego simplificados.
+Fauna: una tortuga de recorrido lento en la primera zona costera de BCS, cangrejos en etapas costeras y de humedales, serpientes en bosques y sierras y alacranes en etapas áridas, como una selección simplificada para el juego. Los animales patrullan espacios delimitados lejos de los bordes de precipicios y de las zonas de aterrizaje bajo los ladrillos; hacen pausas y no persiguen al jugador. La serpiente agita la cola antes de avanzar. Son comportamientos de juego simplificados.
 
 Saltar sobre un animal produce un rebote suave sin dañarlo y lo duerme durante 4 segundos. Mientras duerme cierra los ojos, muestra «Zz», permanece quieto y no causa daño por contacto. Después retoma su recorrido; se puede observar dormido y su sueño se conserva al guardar. Un choque lateral quita un corazón, separa al jugador sin empujarlo al precipicio y concede 1.6 segundos de protección; los poderes se conservan. En modo explorador se atraviesa y observa la fauna sin daño y cada primera observación paga 5 monedas. No hay eliminaciones, patadas ni caparazones como proyectiles. Los caparazones de partidas anteriores vuelven a ser tortugas conservando sus observaciones.
 
-Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (BCS, 2/4), corrido fronterizo (BC, 3/4) y polca chihuahuense (Chihuahua, 2/4). Cada nivel cambia la melodía, el tempo y el acompañamiento. No requieren descargar audio.
+Música: tres composiciones originales sintetizadas, inspiradas en polca sudcaliforniana (2/4), corrido fronterizo (3/4) y polca chihuahuense (2/4), compartidas por las etapas según su ambiente. No requieren descargar audio.
 
 Guardado: botón GUARDAR, opción en pausa y guardado automático cada 5 segundos, al pausar y al ocultar la página. CONTINUAR restaura nivel, personaje, posición, enemigos, bloques, monedas, tiempo, vidas y poderes. Una partida por navegador y dispositivo mediante localStorage, también sin conexión. Nueva partida reemplaza el guardado; terminar la aventura o perder todas las vidas lo elimina.
 
@@ -62,3 +62,15 @@ Ejecuta `node tests/wildlife.cjs` para comprobar contacto, rebotes, sueño y des
 ## Comprar equipo
 
 Los bloques amarillos muestran el producto y su precio: hongo rojo 5 monedas, equipo explorador 10, parapente 20 y vida extra 15. Golpéalos desde abajo para comprar y equipar al instante. Cada bloque permite una compra y queda agotado. Si ya tienes el hongo rojo activo o un parapente, no se vuelve a cobrar por ese equipo. Si falta saldo, no se cobra ni se consume el bloque; el aviso indica cuánto falta. El saldo y los bloques comprados se guardan de inmediato. Las monedas se muestran como saldo disponible y se descuentan al comprar.
+
+## Ruta nacional
+
+Se incluyen los 31 estados y Ciudad de México. El orden usa colindancias entre entidades, consultadas en el [mapa de división estatal de INEGI](https://cuentame.inegi.org.mx/imprime_tu_mapa/doc/nal-division_estatal_con_nombres-byn.pdf). Es una ruta de juego continua, no un itinerario de carreteras ni una optimización de distancias.
+
+Baja California Sur → Baja California → Sonora → Sinaloa → Nayarit → Durango → Chihuahua → Coahuila → Nuevo León → Tamaulipas → San Luis Potosí → Zacatecas → Aguascalientes → Jalisco → Colima → Michoacán → Guanajuato → Querétaro → Hidalgo → Tlaxcala → Puebla → Estado De México → Ciudad de México → Morelos → Guerrero → Oaxaca → Veracruz → Chiapas → Tabasco → Campeche → Yucatán → Quintana Roo.
+
+Cada etapa varía la altura de las plataformas y la posición de los huecos con saltos alcanzables, además de tener nombre, referencias visuales y un ambiente de costa, desierto, bosque, sierra, campo, ciudad, volcán, selva o humedal. Las longitudes se mantienen entre 3860 y 4220 píxeles y el tiempo se reinicia en cada etapa. La ruta desplegable marca la entidad actual y las anteriores; la aventura termina al completar Quintana Roo.
+
+Los guardados usan una identidad de entidad y versión 3. Una partida antigua en el nivel 3 se restaura en Chihuahua (ahora etapa 7), conservando monedas, posición, objetos y la longitud del mapa anterior.
+
+Ejecuta `node tests/national-route.cjs` para comprobar colindancias de la ruta, los 32 guardados, transiciones, plataformas alcanzables con ambos personajes y la migración de Chihuahua.

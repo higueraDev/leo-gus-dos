@@ -57,22 +57,29 @@ function scheduleMusic(){
  if(!active){nextNote=0;return;}
  if(musicLevel!==level){musicLevel=level;musicStep=0;nextNote=0;}
  if(!nextNote||nextNote<audio.currentTime)nextNote=audio.currentTime+.025;
- const track=STATE_MUSIC[level-1]||STATE_MUSIC[0],stepDuration=60/track.bpm/2;
+ const track=STATE_MUSIC[region().music]||STATE_MUSIC[0],stepDuration=60/track.bpm/2;
  while(nextNote<audio.currentTime+.16){playMusicStep(track,musicStep,nextNote,stepDuration);musicStep++;nextNote+=stepDuration;}
 
 }
 function syncSound(){const button=document.querySelector('#sound');document.querySelector('#sound span').textContent=muted?'SONIDO OFF':'SONIDO ON';button.setAttribute('aria-label',muted?'Activar música y efectos':'Silenciar música y efectos');button.setAttribute('aria-pressed',String(!muted));if(audio){masterBus.gain.setTargetAtTime(muted?0:1,audio.currentTime,.015);scheduleMusic();}}
 function beep(freq,dur=.1,type='square'){if(muted||!ensureAudio())return;const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.045,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g).connect(masterBus);o.onended=()=>{o.disconnect();g.disconnect()};o.start();o.stop(audio.currentTime+dur)}
 
+function levelLength(stage){return 3860+(stage-1)%4*120;}
+function stagePlatform(index){
+ const original=['bcs','bc','chih'].includes(region().id),shift=original?0:(level%3-1)*12;
+ return {x:330+index*245+(index%2===0?shift:-shift),y:300-((index+(original?0:level-1))%3)*35,w:index%3===0?128:96};
+}
+function stageGaps(){return [[780,890],[1650,1770],[2650,2780]].map(([a,b],index)=>{const shift=['bcs','bc','chih'].includes(region().id)?0:((level+index)%3-1)*16;return [a+shift,b+shift];});}
+function syncJourney(){document.querySelectorAll('[data-region]').forEach((node,index)=>{node.classList.toggle('visited',index<level-1);if(index===level-1)node.setAttribute('aria-current','step');else node.removeAttribute('aria-current');});}
 function heroHeight(big=false){return (hero==='gus'?38:32)*(big?1.5:1);}
-function setup(){const retained=player?{big:player.big,cape:player.cape,star:player.star}:{};goal=null;items=[];notice=null;world=3600+level*260;platforms=[];gold=[];enemies=[];particles=[];const gaps=[[780,890],[1650,1770],[2650,2780]];let start=0;for(const [a,b]of gaps){platforms.push({x:start,y:416,w:a-start,h:64,type:'ground'});start=b}platforms.push({x:start,y:416,w:world-start,h:64,type:'ground'});for(let i=0;i<13;i++){const x=330+i*245,y=300-(i%3)*35;for(let offset=0;offset<(i%3===0?128:96);offset+=32)platforms.push({x:x+offset,y,w:32,h:24,type:'brick'});for(let j=0;j<3;j++)gold.push({x:x+j*30+14,y:y-32,taken:false});if(i%2===0)platforms.push({x:x+32,y:y-105,w:32,h:32,type:'question',used:false,item:['red','star','feather','green'][(i/2)%4]})}if(level===1)enemies.push({x:230,y:384,w:24,h:32,vx:0,vy:0,kind:'turtle',alive:true,age:0,direction:1,homeMin:180,homeMax:270});spawnRegionalEnemies();for(let x=130;x<world-180;x+=120)if(!gaps.some(([a,b])=>x>a-20&&x<b+20))gold.push({x,y:365,taken:false});player={x:60,y:380,w:24,h:32,vx:0,vy:0,on:false,jumps:0,jumpHeld:false,walkDistance:0,inv:1.2,big:false,cape:false,star:0,flight:6,...retained};player.h=heroHeight(player.big);player.y=412-player.h;camera=0;timer=180;clock=0;notice={text:region().name+' · '+region().caption,time:4}}
+function setup(){const retained=player?{big:player.big,cape:player.cape,star:player.star}:{};goal=null;items=[];notice=null;world=levelLength(level);platforms=[];gold=[];enemies=[];particles=[];const gaps=stageGaps();let start=0;for(const [a,b]of gaps){platforms.push({x:start,y:416,w:a-start,h:64,type:'ground'});start=b}platforms.push({x:start,y:416,w:world-start,h:64,type:'ground'});for(let i=0;i<13;i++){const {x,y,w}=stagePlatform(i);for(let offset=0;offset<w;offset+=32)platforms.push({x:x+offset,y,w:32,h:24,type:'brick'});for(let j=0;j<3;j++)gold.push({x:x+j*30+14,y:y-32,taken:false});if(i%2===0)platforms.push({x:x+32,y:y-105,w:32,h:32,type:'question',used:false,item:['red','star','feather','green'][(i/2)%4]})}if(region().id==='bcs')enemies.push({x:230,y:384,w:24,h:32,vx:0,vy:0,kind:'turtle',alive:true,age:0,direction:1,homeMin:180,homeMax:270});spawnRegionalEnemies();for(let x=130;x<world-180;x+=120)if(!gaps.some(([a,b])=>x>a-20&&x<b+20))gold.push({x,y:365,taken:false});player={x:60,y:380,w:24,h:32,vx:0,vy:0,on:false,jumps:0,jumpHeld:false,walkDistance:0,inv:1.2,big:false,cape:false,star:0,flight:6,...retained};player.h=heroHeight(player.big);player.y=412-player.h;camera=0;timer=180;clock=0;notice={text:region().name+' · '+region().caption,time:4};syncJourney();}
 function begin(){document.querySelector('#screen').classList.add('is-playing');coins=0;lives=3;level=1;player=null;setup();state='play';overlay.style.display='none';document.querySelector('#pause').style.display='block';pauseLayer.hidden=true;musicStep=0;nextNote=0;if(!muted)ensureAudio();syncSound();beep(440);saveGame(false)}
 function die(){lives--;beep(130,.3,'sawtooth');if(lives<=0){finish(false);return}player.x=Math.max(60,player.x-160);player.y=200;player.vx=0;player.vy=0;player.inv=2;player.big=false;player.cape=false;player.star=0;player.h=heroHeight();player.on=false;player.jumps=1;}
 function finish(win){clearSave();document.querySelector('#screen').classList.remove('is-playing');state='end';overlay.style.display='flex';document.querySelector('#message').textContent=win?'¡AVENTURA COMPLETADA! · '+coins+' MONEDAS':'FIN DE LA PARTIDA · '+coins+' MONEDAS';document.querySelector('#start').innerHTML='↻ VOLVER A JUGAR <span>ENTER ↵</span>';document.querySelector('#pause').style.display='none';}
 function pause(){if(state==='play'){state='pause';pauseLayer.hidden=false;saveGame(false)}else if(state==='pause'){state='play';pauseLayer.hidden=true}scheduleMusic();}
 function breakBrick(block){block.broken=true;beep(160,.12,'sawtooth');for(let i=0;i<4;i++)particles.push({type:'debris',x:block.x+(i%2)*16+4,y:block.y+Math.floor(i/2)*12,vx:i%2?95:-95,vy:i<2?-240:-150,life:.75});}
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function update(dt){if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<3){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180}player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
+function update(dt){if(state==='goal'){goal.elapsed+=dt;goal.flagY=Math.min(POLE_BOTTOM-35,227+goal.elapsed*80);player.y=Math.min(POLE_BOTTOM-player.h,player.y+100*dt);if(goal.elapsed>=2.6){if(level<REGIONS.length){level++;setup();state='play';document.querySelector('#pause').style.display='block';saveGame(false)}else finish(true)}return}if(state!=='play')return;const previousX=player.x,previousBottom=player.y+player.h;clock+=dt;timer-=dt;if(timer<=0){die();timer=180}player.inv=Math.max(0,player.inv-dt);player.star=Math.max(0,player.star-dt);player.examine=player.star>0?Math.max(0,(player.examine||0)-dt):0;if(notice)notice.time-=dt;const direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);player.vx=direction*(hero==='leo'?260:220);if(direction)player.facing=direction;if((keys.Space||keys.ArrowUp||keys.KeyW)&&!player.jumpHeld&&(player.on||player.jumps<2)){const airJump=!player.on;player.jumps=airJump?2:1;const jumpSpeed=hero==='gus'?-560:-510,airJumpSpeed=hero==='gus'?-620:-600;player.vy=airJump?Math.min(player.vy,airJumpSpeed):jumpSpeed;player.on=false;beep(airJump?740:550,.12)}player.jumpHeld=keys.Space||keys.ArrowUp||keys.KeyW;
 player.x+=player.vx*dt;for(const p of platforms)if(hit(player,p)){if(player.vx>0)player.x=p.x-player.w;else if(player.vx<0)player.x=p.x+p.w}player.x=Math.max(0,player.x);if(!player.on&&player.jumps===0)player.jumps=1;const flying=player.cape&&!player.on&&player.jumpHeld&&player.flight>0&&player.vy>=0;if(flying){player.flight=Math.max(0,player.flight-dt);player.vy=Math.min(65,player.vy+180*dt)}else player.vy+=1350*dt;player.y+=player.vy*dt;player.on=false;for(const p of platforms)if(hit(player,p)){if(player.vy>0){player.y=p.y-player.h;player.vy=0;player.on=true;player.jumps=0;player.flight=6}else if(player.vy<0){player.y=p.y+p.h;player.vy=0;if(p.type==='brick'){breakBrick(p)}else if(p.type==='question'&&!p.used)purchaseBlock(p)}}platforms=platforms.filter(p=>!p.broken);if(player.y>520)die();
 for(const c of gold)if(!c.taken&&Math.abs(player.x+12-c.x)<23&&Math.abs(player.y+16-c.y)<29){c.taken=true;coins++;beep(900,.06)}
 if(player.on&&Math.abs(player.vx)>0)player.walkDistance=(player.walkDistance||0)+Math.abs(player.x-previousX);updateItems(dt);if(player.big&&player.h<heroHeight(true))resizePlayer(heroHeight(true));updateEnemies(dt,previousBottom);
@@ -172,9 +179,9 @@ function restoreAnimal(e){
  return e;
 }
 function spawnRegionalEnemies(){
- const kind=['crab','snake','scorpion'][level-1],size={crab:[30,20],snake:[30,18],scorpion:[34,24]}[kind];
+ const kind=region().fauna[0],size={crab:[30,20],snake:[30,18],scorpion:[34,24]}[kind];
  for(let i=0;i<12;i+=2){
-  const left=330+i*245+(i%3===0?128:96),right=330+(i+1)*245,w=size[0];
+  const current=stagePlatform(i),left=current.x+current.w,right=stagePlatform(i+1).x,w=size[0];
   const x=(left+right-w)/2;
   const ground=platforms.find(p=>p.type==='ground'&&x>=p.x+96&&x+w<=p.x+p.w-96);
   if(!ground)continue;
@@ -274,9 +281,38 @@ function drawAnimalSleep(e){
 function cloud(x,y){rect(x,y,72,20,'#e5f1da');rect(x+12,y-12,24,14,'#e5f1da');rect(x+32,y-20,24,22,'#e5f1da');rect(x+8,y+20,65,5,'#bddbd2')}
 function mountain(x,y,w,h){ctx.fillStyle='#87ae9c';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w/2,y-h);ctx.lineTo(x+w,y);ctx.fill();ctx.fillStyle='#9cc0a6';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w/2,y-h);ctx.lineTo(x+w/2,y);ctx.fill()}
 const REGIONS=[
- {name:'BAJA CALIFORNIA SUR',short:'BCS',sky:'#8ac9d5',soil:'#b98a5d',edge:'#e3c184',speck:'#d3aa73',shadow:'#946b4c',caption:'Cardones · costa · ballena gris'},
- {name:'BAJA CALIFORNIA',short:'BC',sky:'#b7c9d1',soil:'#9d795c',edge:'#b7b17c',speck:'#bf9c78',shadow:'#765a47',caption:'Cirios · viñedos · borrego cimarrón'},
- {name:'CHIHUAHUA',short:'CHIH.',sky:'#d5c7b5',soil:'#b57652',edge:'#d3a46a',speck:'#d19b71',shadow:'#8c553d',caption:'Sotol · dunas · venado bura'}
+ {"id":"bcs","name":"BAJA CALIFORNIA SUR","short":"BCS","biome":"coast","fauna":["crab"],"caption":"Cardones · costa · ballena gris","landmark":"arch","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"},
+ {"id":"bc","name":"BAJA CALIFORNIA","short":"BC","biome":"desert","fauna":["snake"],"caption":"Cirios · viñedos · borrego cimarrón","landmark":"vineyard","music":1,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#b59b89","near":"#c6aa91"},
+ {"id":"son","name":"SONORA","short":"SON.","biome":"desert","fauna":["scorpion"],"caption":"Desierto · sierras · cardones","landmark":"cactus","music":2,"sky":"#d5c7b5","soil":"#b57652","edge":"#d3a46a","speck":"#d19b71","shadow":"#8c553d","far":"#b59b89","near":"#c6aa91"},
+ {"id":"sin","name":"SINALOA","short":"SIN.","biome":"farmland","fauna":["crab"],"caption":"Costa · campos · valles","landmark":"fields","music":0,"sky":"#aacfd2","soil":"#a38b58","edge":"#b8be78","speck":"#cab781","shadow":"#77683e","far":"#a8b995","near":"#8a9d70"},
+ {"id":"nay","name":"NAYARIT","short":"NAY.","biome":"coast","fauna":["crab"],"caption":"Islas · esteros · palmeras","landmark":"islands","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"},
+ {"id":"dgo","name":"DURANGO","short":"DGO.","biome":"forest","fauna":["snake"],"caption":"Sierra · pinos · ferrocarril","landmark":"bridge","music":1,"sky":"#a8c5c8","soil":"#8c7458","edge":"#9eaf75","speck":"#b89c74","shadow":"#66523e","far":"#8aa79c","near":"#557c69"},
+ {"id":"chih","name":"CHIHUAHUA","short":"CHIH.","biome":"desert","fauna":["scorpion"],"caption":"Sotol · dunas · venado bura","landmark":"railway","music":2,"sky":"#d5c7b5","soil":"#b57652","edge":"#d3a46a","speck":"#d19b71","shadow":"#8c553d","far":"#b59b89","near":"#c6aa91"},
+ {"id":"coah","name":"COAHUILA","short":"COAH.","biome":"desert","fauna":["scorpion"],"caption":"Dunas · sierras · paisajes fósiles","landmark":"dunes","music":2,"sky":"#d5c7b5","soil":"#b57652","edge":"#d3a46a","speck":"#d19b71","shadow":"#8c553d","far":"#b59b89","near":"#c6aa91"},
+ {"id":"nl","name":"NUEVO LEÓN","short":"NL","biome":"highland","fauna":["snake"],"caption":"Cerro de la Silla · montañas","landmark":"saddle","music":1,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#a1aaa3","near":"#839487"},
+ {"id":"tamps","name":"TAMAULIPAS","short":"TAMPS.","biome":"wetland","fauna":["crab"],"caption":"Lagunas · costa · llanuras","landmark":"lagoon","music":0,"sky":"#a7c8c6","soil":"#96825b","edge":"#a9b27c","speck":"#b8ad80","shadow":"#6d6245","far":"#88aca0","near":"#648d7a"},
+ {"id":"slp","name":"SAN LUIS POTOSÍ","short":"SLP","biome":"jungle","fauna":["snake"],"caption":"Huasteca · cascadas · sierras","landmark":"waterfall","music":1,"sky":"#9dc8bd","soil":"#92734e","edge":"#9eb76b","speck":"#b5a26d","shadow":"#615838","far":"#7ba38b","near":"#4d8069"},
+ {"id":"zac","name":"ZACATECAS","short":"ZAC.","biome":"highland","fauna":["scorpion"],"caption":"Cantera · cerros · acueducto","landmark":"aqueduct","music":2,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#a1aaa3","near":"#839487"},
+ {"id":"ags","name":"AGUASCALIENTES","short":"AGS.","biome":"city","fauna":["scorpion"],"caption":"Jardines · plazas · ferrocarril","landmark":"plaza","music":1,"sky":"#c0c6d0","soil":"#a18e79","edge":"#cfba91","speck":"#c6b098","shadow":"#776353","far":"#a99daa","near":"#8b8e9c"},
+ {"id":"jal","name":"JALISCO","short":"JAL.","biome":"farmland","fauna":["snake"],"caption":"Agaves · valles · arquitectura","landmark":"agave","music":1,"sky":"#aacfd2","soil":"#a38b58","edge":"#b8be78","speck":"#cab781","shadow":"#77683e","far":"#a8b995","near":"#8a9d70"},
+ {"id":"col","name":"COLIMA","short":"COL.","biome":"volcano","fauna":["snake"],"caption":"Volcán · palmares · costa","landmark":"volcano","music":0,"sky":"#b0c6d7","soil":"#8e8174","edge":"#b4b48e","speck":"#b2a08b","shadow":"#62594f","far":"#9da7b2","near":"#7f9295"},
+ {"id":"mich","name":"MICHOACÁN","short":"MICH.","biome":"forest","fauna":["snake"],"caption":"Lagos · bosques · pueblos","landmark":"lake","music":1,"sky":"#a8c5c8","soil":"#8c7458","edge":"#9eaf75","speck":"#b89c74","shadow":"#66523e","far":"#8aa79c","near":"#557c69"},
+ {"id":"gto","name":"GUANAJUATO","short":"GTO.","biome":"city","fauna":["scorpion"],"caption":"Callejones · cantera · cerros","landmark":"town","music":1,"sky":"#c0c6d0","soil":"#a18e79","edge":"#cfba91","speck":"#c6b098","shadow":"#776353","far":"#a99daa","near":"#8b8e9c"},
+ {"id":"qro","name":"QUERÉTARO","short":"QRO.","biome":"highland","fauna":["snake"],"caption":"Acueducto · Sierra Gorda","landmark":"aqueduct","music":1,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#a1aaa3","near":"#839487"},
+ {"id":"hgo","name":"HIDALGO","short":"HGO.","biome":"highland","fauna":["snake"],"caption":"Prismas · barrancas · magueyes","landmark":"basalt","music":1,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#a1aaa3","near":"#839487"},
+ {"id":"tlax","name":"TLAXCALA","short":"TLAX.","biome":"forest","fauna":["snake"],"caption":"Bosques · plazas · La Malinche","landmark":"tower","music":1,"sky":"#a8c5c8","soil":"#8c7458","edge":"#9eaf75","speck":"#b89c74","shadow":"#66523e","far":"#8aa79c","near":"#557c69"},
+ {"id":"pue","name":"PUEBLA","short":"PUE.","biome":"volcano","fauna":["snake"],"caption":"Volcanes · cúpulas · azulejos","landmark":"domes","music":1,"sky":"#b0c6d7","soil":"#8e8174","edge":"#b4b48e","speck":"#b2a08b","shadow":"#62594f","far":"#9da7b2","near":"#7f9295"},
+ {"id":"mex","name":"ESTADO DE MÉXICO","short":"EDOMEX","biome":"volcano","fauna":["snake"],"caption":"Nevado · bosques · valles","landmark":"snowcap","music":1,"sky":"#b0c6d7","soil":"#8e8174","edge":"#b4b48e","speck":"#b2a08b","shadow":"#62594f","far":"#9da7b2","near":"#7f9295"},
+ {"id":"cdmx","name":"CIUDAD DE MÉXICO","short":"CDMX","biome":"city","fauna":["snake"],"caption":"Lagos · canales · gran ciudad","landmark":"skyline","music":1,"sky":"#c0c6d0","soil":"#a18e79","edge":"#cfba91","speck":"#c6b098","shadow":"#776353","far":"#a99daa","near":"#8b8e9c"},
+ {"id":"mor","name":"MORELOS","short":"MOR.","biome":"jungle","fauna":["snake"],"caption":"Jardines · cerros · flores","landmark":"gardens","music":0,"sky":"#9dc8bd","soil":"#92734e","edge":"#9eb76b","speck":"#b5a26d","shadow":"#615838","far":"#7ba38b","near":"#4d8069"},
+ {"id":"gro","name":"GUERRERO","short":"GRO.","biome":"coast","fauna":["crab"],"caption":"Acantilados · bahías · palmeras","landmark":"cliffs","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"},
+ {"id":"oax","name":"OAXACA","short":"OAX.","biome":"highland","fauna":["snake"],"caption":"Valles · magueyes · Monte Albán","landmark":"terraces","music":1,"sky":"#b7c9d1","soil":"#9d795c","edge":"#b7b17c","speck":"#bf9c78","shadow":"#765a47","far":"#a1aaa3","near":"#839487"},
+ {"id":"ver","name":"VERACRUZ","short":"VER.","biome":"coast","fauna":["crab"],"caption":"Puerto · fortaleza · palmares","landmark":"fort","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"},
+ {"id":"chis","name":"CHIAPAS","short":"CHIS.","biome":"jungle","fauna":["snake"],"caption":"Selva · cascadas · templos","landmark":"temple","music":0,"sky":"#9dc8bd","soil":"#92734e","edge":"#9eb76b","speck":"#b5a26d","shadow":"#615838","far":"#7ba38b","near":"#4d8069"},
+ {"id":"tab","name":"TABASCO","short":"TAB.","biome":"wetland","fauna":["crab"],"caption":"Ríos · humedales · cacao","landmark":"river","music":0,"sky":"#a7c8c6","soil":"#96825b","edge":"#a9b27c","speck":"#b8ad80","shadow":"#6d6245","far":"#88aca0","near":"#648d7a"},
+ {"id":"camp","name":"CAMPECHE","short":"CAMP.","biome":"coast","fauna":["crab"],"caption":"Murallas · costa · ciudad de colores","landmark":"walls","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"},
+ {"id":"yuc","name":"YUCATÁN","short":"YUC.","biome":"jungle","fauna":["snake"],"caption":"Cenotes · selva · pirámides","landmark":"pyramid","music":0,"sky":"#9dc8bd","soil":"#92734e","edge":"#9eb76b","speck":"#b5a26d","shadow":"#615838","far":"#7ba38b","near":"#4d8069"},
+ {"id":"qroo","name":"QUINTANA ROO","short":"Q. ROO","biome":"coast","fauna":["crab"],"caption":"Caribe · lagunas · ruinas costeras","landmark":"ruins","music":0,"sky":"#8ac9d5","soil":"#b98a5d","edge":"#e3c184","speck":"#d3aa73","shadow":"#946b4c","far":"#8ea99b","near":"#759c88"}
 ];
 function region(){return REGIONS[level-1]||REGIONS[0];}
 function sceneryLayer(spacing,speed,drawObject){const first=Math.floor(camera*speed/spacing)-1;for(let i=first;i<first+Math.ceil(960/spacing)+3;i++)drawObject(i*spacing-camera*speed,((i%6)+6)%6,i);}
@@ -292,11 +328,83 @@ function drawBarrelCactus(x,y){rect(x+3,y-24,22,24,'#83916b');rect(x+7,y-29,14,5
 function drawPelican(x,y){const wing=Math.floor(clock*3)%2?4:0;rect(x,y,17,4,'#7b999d');rect(x+12,y-3,5,4,'#7b999d');rect(x+17,y-1,11,2,'#c4b78d');pixelShape([[x+6,y+2],[x-5,y-7-wing],[x+10,y-2]],'#7b999d');}
 function drawBighorn(x,y){const c='#9b9c86';rect(x+8,y+9,32,15,c);rect(x+37,y+3,12,15,c);rect(x+9,y+23,4,14,c);rect(x+33,y+23,4,14,c);rect(x+3,y+11,8,3,c);rect(x+37,y,14,4,'#c1b998');rect(x+47,y+3,5,10,'#c1b998');rect(x+40,y+12,10,4,'#c1b998');rect(x+40,y+7,4,6,'#c1b998');rect(x+46,y+7,2,2,'#666e61');}
 function drawDeer(x,y){const c='#b5a184';rect(x+8,y+13,32,13,c);rect(x+35,y+4,8,17,c);rect(x+39,y+2,13,7,c);rect(x+10,y+25,3,16,c);rect(x+33,y+25,3,16,c);rect(x+3,y+11,7,4,'#e1cbb0');rect(x+38,y-8,3,12,c);rect(x+45,y-10,3,13,c);rect(x+33,y-5,7,2,c);rect(x+46,y-6,6,2,c);}
+function drawPalm(x,y){
+ rect(x,y-55,5,55,'#89734d');
+ pixelShape([[x+2,y-58],[x-26,y-67],[x-39,y-57],[x-17,y-58],[x+2,y-51]],'#537e61');
+ pixelShape([[x+2,y-57],[x+24,y-68],[x+39,y-58],[x+19,y-59],[x+2,y-50]],'#608e68');
+ pixelShape([[x+2,y-57],[x-5,y-78],[x+3,y-85],[x+10,y-65]],'#6b986c');
+}
+function drawPine(x,y,height=76){
+ rect(x-2,y-height,5,height,'#76694e');
+ for(let i=0;i<3;i++)pixelShape([[x,y-height-i*10],[x-19-i*4,y-25-i*16],[x+19+i*4,y-25-i*16]],i%2?'#527d68':'#638b70');
+}
+function drawNationalLandmark(theme,x){
+ const kind=theme.landmark;
+ if(['aqueduct','bridge'].includes(kind)){
+  rect(x,310,260,9,'#a69378');
+  for(let i=0;i<7;i++){rect(x+i*39,319,10,84,'#b5a184');pixelShape([[x+i*39+10,319],[x+i*39+20,330],[x+i*39+29,319]],'#b5a184');}
+  if(kind==='bridge'){rect(x,298,260,5,'#787f7a');for(let i=0;i<12;i++)rect(x+i*23,303,3,7,'#787f7a');}
+ }else if(['pyramid','temple','terraces','ruins'].includes(kind)){
+  const steps=kind==='pyramid'?6:kind==='terraces'?3:4;
+  for(let i=0;i<steps;i++)rect(x+i*13,400-i*13,200-i*26,14,'#acaa8a');
+  rect(x+91,400-steps*13,17,steps*13,'#d0c7a6');
+  if(kind!=='terraces'){rect(x+70,385-steps*13,60,16,'#aaa88c');rect(x+91,388-steps*13,17,12,'#667c6e');}
+  if(kind==='ruins'){rect(x+226,349,12,55,'#bbb69a');rect(x+260,345,12,59,'#bbb69a');rect(x+226,340,46,10,'#cac1a0');}
+ }else if(['volcano','snowcap','domes'].includes(kind)){
+  pixelShape([[x-35,406],[x+99,235],[x+230,406]],'#87969b');
+  pixelShape([[x+99,235],[x+230,406],[x+134,406]],'#74888e');
+  pixelShape([[x+75,266],[x+99,235],[x+123,266],[x+108,262],[x+97,271],[x+89,261]],'#e1e4db');
+  if(kind==='domes'){rect(x+250,354,82,52,'#bdaf91');rect(x+260,344,62,12,'#cfc09e');pixelShape([[x+259,344],[x+290,321],[x+323,344]],'#b6967e');rect(x+285,371,14,35,'#7b8a83');}
+ }else if(kind==='lake'){
+  rect(x-20,367,275,39,'#80b3b9');rect(x,381,235,3,'#bdd6c8');
+  for(let i=0;i<4;i++){rect(x+25+i*48,351,38,19,'#bca98a');pixelShape([[x+21+i*48,351],[x+44+i*48,338],[x+67+i*48,351]],'#a38b78');}
+ }else if(kind==='waterfall'){
+  rect(x,286,190,120,'#819980');rect(x+60,276,67,130,'#83bac0');
+  for(let i=0;i<4;i++)rect(x+66+i*15,286,5,112,'#c1dcd6');rect(x+20,395,160,12,'#7eafb4');
+ }else if(kind==='basalt'){
+  for(let i=0;i<13;i++){const height=45+(i%4)*14;rect(x+i*13,406-height,11,height,i%2?'#9a9f98':'#808c88');rect(x+i*13+1,406-height,9,3,'#bbc0b2');}
+ }else if(['fort','walls'].includes(kind)){
+  rect(x,350,245,56,'#b9b69b');for(let i=0;i<13;i++)rect(x+i*20,342,12,10,'#c6bea0');
+  for(const dx of [0,210]){rect(x+dx,328,35,78,'#b1b29a');rect(x+dx-4,326,43,9,'#c7c0a3');}
+  rect(x+109,371,25,35,'#748e84');
+ }else if(['town','plaza','skyline','tower'].includes(kind)){
+  const colors=kind==='town'?['#b18c83','#cfb18b','#9da491','#c39c88']:['#a7a59b','#b4b3a4','#98a39e','#c3b59c'];
+  for(let i=0;i<6;i++){const height=kind==='skyline'?55+i%3*25:35+i%3*12;rect(x+i*39,406-height,36,height,colors[i%4]);for(let k=0;k<3;k++)rect(x+i*39+6+k*10,415-height,5,9,'#d9d5b6');rect(x+i*39+13,386,11,20,'#788b84');}
+  if(kind!=='skyline'){rect(x+104,286,26,89,'#baa98b');pixelShape([[x+100,286],[x+117,264],[x+134,286]],'#a88e78');rect(x+112,306,10,17,'#788b84');}
+ }else if(kind==='saddle'){
+  pixelShape([[x-50,405],[x+45,279],[x+95,320],[x+150,260],[x+260,405]],'#8b9f9c');
+  pixelShape([[x+150,260],[x+260,405],[x+185,405]],'#758e89');
+ }else if(kind==='cliffs'){
+  pixelShape([[x,406],[x+5,330],[x+80,300],[x+110,406]],'#a8a68d');pixelShape([[x+160,406],[x+190,314],[x+260,339],[x+275,406]],'#b4ac8e');
+ }else if(['fields','agave','gardens','vineyard'].includes(kind)){
+  for(let i=0;i<7;i++){const px=x+i*32;rect(px,373,3,33,'#8a9770');if(kind==='agave')drawSotol(px,406);else{pixelShape([[px,389],[px-12,374],[px,381],[px+12,368]],'#81a172');if(kind==='gardens')rect(px-3,369,7,7,i%2?'#d3aa91':'#d0bf83');}}
+ }else if(kind==='cactus'){drawCardon(x+30,406,105);drawCardon(x+145,406,75);}
+ else if(kind==='dunes'){desertRidge(x,406,290,55,'#c8b28d','#d7c398');drawBarrelCactus(x+180,406);}
+ else if(['islands','lagoon','river'].includes(kind)){
+  rect(x,387,270,18,'#79aeb2');desertRidge(x+80,387,140,38,theme.far,theme.near);drawPalm(x+200,385);
+ }
+}
+function drawNationalScenery(theme){
+ const lush=['forest','jungle','wetland'].includes(theme.biome),coast=['coast','wetland'].includes(theme.biome);
+ const variant=REGIONS.indexOf(theme)%5;
+ sceneryLayer(360,.12,(x,v)=>desertRidge(x,384,450,70+(v+variant)%3*25,theme.far,theme.near));
+ if(coast){rect(0,348,960,68,'#77adb5');rect(0,388,960,28,'#8bbfc2');}
+ if(theme.biome==='wetland')for(let i=0;i<4;i++)rect(0,354+i*16,960,3,'#a7ccc0');
+ sceneryLayer(650,.23,(x)=>drawNationalLandmark(theme,x+85));
+ sceneryLayer(190,.4,(x,v)=>{
+  if(theme.biome==='forest')drawPine(x+70,416,70+v%3*12);
+  else if(['jungle','coast','wetland'].includes(theme.biome))drawPalm(x+85,416);
+  else if(theme.biome==='desert'){if(v%2)drawCardon(x+70,416,65);else drawBarrelCactus(x+90,416);}
+  else if(['farmland','highland'].includes(theme.biome))drawSotol(x+75,416);
+  else{rect(x+65,387,5,29,'#8b8068');rect(x+55,375,26,18,lush?'#668b70':'#8b9e7b');}
+ });
+}
 function drawRegionalBackground(){
  const theme=region();rect(0,0,960,480,theme.sky);
- rect(800,82,32,32,level===3?'#ecdbc0':'#e7dca9');rect(795,88,42,20,level===3?'#ecdbc0':'#e7dca9');
+ rect(800,82,32,32,theme.biome==='desert'?'#ecdbc0':'#e7dca9');rect(795,88,42,20,theme.biome==='desert'?'#ecdbc0':'#e7dca9');
  sceneryLayer(290,.07,(x,v)=>{ctx.save();ctx.translate(x+50,95+v%3*24);ctx.scale(.5+v%3*.15,.5+v%3*.15);cloud(0,0);ctx.restore();});
- if(level===1){
+ if(!['bcs','bc','chih'].includes(theme.id)){drawNationalScenery(theme);return;}
+ if(theme.id==='bcs'){
   // Coastal BCS: islands, Gulf/Pacific water, granite arch and gray-whale silhouettes.
   rect(0,307,960,109,'#79b5bd');rect(0,331,960,85,'#7bbcc0');
   sceneryLayer(420,.12,(x,v)=>desertRidge(x,321,280,75+v*8,'#b2b39a','#c3bba0'));
@@ -306,7 +414,7 @@ function drawRegionalBackground(){
    drawPelican(x+260,210+v%2*40);
   });
   sceneryLayer(330,.29,(x,v)=>{desertRidge(x-30,416,360,45+v*5,'#c0b08c','#ccb997');drawCardon(x+100,410,85+v%3*20);if(v%2)drawCardon(x+220,416,55);});
- }else if(level===2){
+ }else if(theme.id==='bc'){
   // Baja California: coastal sierras, cirio desert and the northern vineyard valleys.
   sceneryLayer(300,.13,(x,v)=>desertRidge(x,388,370,100+v%3*25,'#a1aaa3','#b3b4a3'));
   rect(0,382,960,34,'#b6b592');
@@ -327,7 +435,7 @@ function drawRegionalBackground(){
   sceneryLayer(230,.38,(x,v)=>{if(v%2===0)drawSotol(x+90,416);else{drawBarrelCactus(x+60,416);drawSotol(x+175,416);}});
  }
  // Small desert scrub and stones use a separate, faster parallax layer.
- sceneryLayer(100,.58,(x,v)=>{rect(x+10,411,22,5,level===1?'#b3b692':'#c0ab87');if(v%2){rect(x+16,406,12,5,level===1?'#c2c3a1':'#cfb996');}else{rect(x+16,397,3,19,'#989d77');rect(x+8,405,10,3,'#989d77');rect(x+19,402,11,3,'#989d77');}});
+ sceneryLayer(100,.58,(x,v)=>{rect(x+10,411,22,5,theme.id==='bcs'?'#b3b692':'#c0ab87');if(v%2){rect(x+16,406,12,5,theme.id==='bcs'?'#c2c3a1':'#cfb996');}else{rect(x+16,397,3,19,'#989d77');rect(x+8,405,10,3,'#989d77');rect(x+19,402,11,3,'#989d77');}});
 }
 
 function drawShopBlock(block){
@@ -358,29 +466,30 @@ function drawHud(theme){
  ctx.font='bold 11px monospace';ctx.fillStyle='#ffdc79';ctx.fillText('SALDO · MONEDAS',180,17);
  rect(180,26,13,19,'#e9a93d');rect(183,28,3,14,'#ffe5a0');
  ctx.font='bold 24px monospace';ctx.fillText(String(coins),204,45);
- ctx.font='bold 13px monospace';ctx.fillStyle='#f5efce';ctx.fillText('NIVEL '+level+' · '+theme.short,400,35);
+ ctx.font='bold 13px monospace';ctx.fillStyle='#f5efce';ctx.fillText(level+'/'+REGIONS.length+' · '+theme.short,400,35);
  ctx.font='bold 11px monospace';ctx.fillStyle='#ff9ba1';ctx.fillText('VIDAS',610,17);
  if(lives<=5){for(let i=0;i<Math.max(0,lives);i++)drawHeart(610+i*28,27);}
  else{drawHeart(610,27);ctx.font='bold 24px monospace';ctx.fillStyle='#ff6973';ctx.fillText('× '+lives,640,46);}
  ctx.font='bold 13px monospace';ctx.fillStyle='#f5efce';ctx.fillText('TIEMPO '+Math.ceil(timer),795,35);
  ctx.font='bold 12px monospace';ctx.fillStyle='#fff0cd';ctx.fillText(theme.name,26,471);
 }
-function drawGoal(){if(state!=='goal')return;rect(245,105,470,175,'#132c28ed');ctx.textAlign='center';ctx.fillStyle='#c1f463';ctx.font='bold 24px monospace';ctx.fillText(region().name,480,145);ctx.fillStyle='#ffdd7c';ctx.font='bold 29px monospace';ctx.fillText('BANDERA +'+goal.bonus+' MONEDAS',480,191);ctx.fillStyle='#eef0d8';ctx.font='16px monospace';ctx.fillText('TIEMPO +'+goal.timeBonus+' MONEDAS',480,222);ctx.font='12px monospace';ctx.fillText(level<3?'SIGUIENTE: '+REGIONS[level].name:'¡RECORRIDO COMPLETADO!',480,254);ctx.textAlign='start';}
+function drawGoal(){if(state!=='goal')return;rect(245,105,470,175,'#132c28ed');ctx.textAlign='center';ctx.fillStyle='#c1f463';ctx.font='bold '+(region().name.length>22?16:22)+'px monospace';ctx.fillText(region().name,480,145);ctx.fillStyle='#ffdd7c';ctx.font='bold 29px monospace';ctx.fillText('BANDERA +'+goal.bonus+' MONEDAS',480,191);ctx.fillStyle='#eef0d8';ctx.font='16px monospace';ctx.fillText('TIEMPO +'+goal.timeBonus+' MONEDAS',480,222);ctx.font='12px monospace';ctx.fillText(level<REGIONS.length?'SIGUIENTE: '+REGIONS[level].name:'¡RECORRIDO COMPLETADO!',480,254);ctx.textAlign='start';}
 function frame(t){const dt=Math.min((t-last)/1000,.025);last=t;update(dt);draw();drawGoal();saveTick(dt);requestAnimationFrame(frame)}
 const SAVE_KEY='higueradev.leo-gus.save.v1';
 let saveElapsed=0;
 const saveStatus=document.querySelector('#save-status'),continueButton=document.querySelector('#continue');
 function validSave(data){
  const finite=(n)=>typeof n==='number'&&Number.isFinite(n),box=o=>o&&['x','y','w','h'].every(k=>finite(o[k]))&&o.w>0&&o.h>0;
- return data&&[1,2].includes(data.version)&&['leo','gus'].includes(data.hero)&&Number.isInteger(data.level)&&data.level>=1&&data.level<=3&&Number.isInteger(data.lives)&&data.lives>0&&data.lives<10000&&[data.coins,data.timer,data.clock,data.savedAt].every(finite)&&data.timer>0&&data.timer<=180&&Number.isInteger(data.coins)&&data.coins>=0&&box(data.player)&&['vx','vy','inv','star','flight','jumps'].every(k=>finite(data.player[k]))&&['big','cape','on'].every(k=>typeof data.player[k]==='boolean')&&['platforms','gold','enemies','items'].every(k=>Array.isArray(data[k])&&data[k].length<1000)&&data.platforms.every(p=>box(p)&&['ground','brick','question'].includes(p.type))&&data.gold.every(c=>c&&finite(c.x)&&finite(c.y))&&data.enemies.every(e=>box(e)&&finite(e.vx)&&finite(e.vy)&&['turtle','shell','crab','snake','scorpion'].includes(e.kind))&&data.items.every(i=>box(i)&&finite(i.vx)&&finite(i.vy)&&finite(i.age)&&['red','green','star','feather'].includes(i.kind));
+ return data&&[1,2,3].includes(data.version)&&['leo','gus'].includes(data.hero)&&Number.isInteger(data.level)&&data.level>=1&&data.level<=(data.version<3?3:REGIONS.length)&&(data.version<3||(data.regionId===REGIONS[data.level-1].id&&finite(data.world)&&data.world>=3500&&data.world<=13000))&&Number.isInteger(data.lives)&&data.lives>0&&data.lives<10000&&[data.coins,data.timer,data.clock,data.savedAt].every(finite)&&data.timer>0&&data.timer<=180&&Number.isInteger(data.coins)&&data.coins>=0&&box(data.player)&&['vx','vy','inv','star','flight','jumps'].every(k=>finite(data.player[k]))&&['big','cape','on'].every(k=>typeof data.player[k]==='boolean')&&['platforms','gold','enemies','items'].every(k=>Array.isArray(data[k])&&data[k].length<1000)&&data.platforms.every(p=>box(p)&&['ground','brick','question'].includes(p.type))&&data.gold.every(c=>c&&finite(c.x)&&finite(c.y))&&data.enemies.every(e=>box(e)&&finite(e.vx)&&finite(e.vy)&&['turtle','shell','crab','snake','scorpion'].includes(e.kind))&&data.items.every(i=>box(i)&&finite(i.vx)&&finite(i.vy)&&finite(i.age)&&['red','green','star','feather'].includes(i.kind));
 }
 function readSave(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw||raw.length>500000)return null;const data=JSON.parse(raw);return validSave(data)?data:null;}catch{return null;}}
-function refreshContinue(){const data=readSave();continueButton.hidden=!data;if(data){continueButton.textContent='[ CONTINUAR · '+data.hero.toUpperCase()+' · '+REGIONS[data.level-1].short+' ]';document.querySelector('#start').innerHTML='[ NUEVA PARTIDA ] <span>ENTER ↵</span>';document.querySelector('#save-hint').textContent='Partida del '+new Date(data.savedAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})+' · guardada en este navegador.';}}
+function savedStage(data){return data.version<3?REGIONS.findIndex(r=>r.id===['bcs','bc','chih'][data.level-1])+1:data.level;}
+function refreshContinue(){const data=readSave();continueButton.hidden=!data;if(data){continueButton.textContent='[ CONTINUAR · '+data.hero.toUpperCase()+' · '+REGIONS[savedStage(data)-1].short+' ]';document.querySelector('#start').innerHTML='[ NUEVA PARTIDA ] <span>ENTER ↵</span>';document.querySelector('#save-hint').textContent='Partida del '+new Date(data.savedAt).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})+' · guardada en este navegador.';}}
 function saveGame(manual=false){
  if(state!=='play'&&state!=='pause')return false;
  saveElapsed=0;
  try{
-  const data={version:2,savedAt:Date.now(),hero,level,lives,coins,timer,clock,player:{...player},platforms,gold,enemies,items};
+  const data={version:3,regionId:region().id,world,savedAt:Date.now(),hero,level,lives,coins,timer,clock,player:{...player},platforms,gold,enemies,items};
   if(!validSave(data))throw Error('Invalid state');localStorage.setItem(SAVE_KEY,JSON.stringify(data));
   saveStatus.textContent=manual?'Partida guardada.':'Guardado automático · '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   refreshContinue();return true;
@@ -389,9 +498,9 @@ function saveGame(manual=false){
 function clearSave(){try{localStorage.removeItem(SAVE_KEY)}catch{}continueButton.hidden=true;document.querySelector('#save-hint').textContent='Guardado local en este navegador y dispositivo.';saveStatus.textContent='Partida terminada.';}
 function continueGame(){
  const data=readSave();if(!data){saveStatus.textContent='No se encontró una partida compatible.';refreshContinue();return;}
- hero=data.hero;level=data.level;lives=data.lives;coins=data.coins;timer=data.timer;clock=data.clock;
+ hero=data.hero;level=savedStage(data);lives=data.lives;coins=data.coins;timer=data.timer;clock=data.clock;
  player={...data.player};platforms=data.platforms;gold=data.gold;enemies=data.enemies.map(restoreAnimal);items=data.items;
- world=3600+level*260;camera=Math.max(0,Math.min(world-960,player.x-300));particles=[];goal=null;state='play';saveElapsed=0;
+ world=data.version<3?3600+data.level*260:data.world;camera=Math.max(0,Math.min(world-960,player.x-300));particles=[];goal=null;state='play';saveElapsed=0;syncJourney();
  Object.keys(keys).forEach(k=>keys[k]=false);player.jumpHeld=false;
  notice={text:'PARTIDA RECUPERADA · '+region().name,time:3};
  overlay.style.display='none';pauseLayer.hidden=true;document.querySelector('#screen').classList.add('is-playing');document.querySelector('#pause').style.display='block';
