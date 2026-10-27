@@ -21,7 +21,7 @@ for(level=1;level<=REGIONS.length;level++){
  for(const [kind,count]of Object.entries(profile)){
   seen.add(kind);check(enemies.filter(e=>e.kind===kind).length===count,'exact regional encounters '+region().id+' '+kind);
  }
- check(enemies.every(e=>e.x>=180&&e.homeMax>e.homeMin&&!platforms.some(p=>p.type==='brick'&&e.homeMin<p.x+p.w&&e.homeMax+e.w>p.x)),'safe patrol placement');
+ check(enemies.every(e=>e.x>=180&&e.homeMax>e.homeMin&&!platforms.some(p=>p.type==='brick'&&p.y+p.h>416-e.h&&p.y<416&&e.homeMin<p.x+p.w&&e.homeMax+e.w>p.x)),'safe patrol placement');
  const snapshot=JSON.stringify(enemies);check(saveGame(false),'population saves');continueGame();check(JSON.stringify(enemies)===snapshot,'resume preserves individuals and positions');
  player.star=1000;
  for(let frame=0;frame<600;frame++)updateEnemies(1/30,player.y+player.h);

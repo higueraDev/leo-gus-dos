@@ -98,3 +98,13 @@ Validación adicional: `node tests/field-tools.cjs`.
 14 tipos de animales y 4–5 tipos distintos por nivel, con 7–10 ejemplares y cantidades diferentes según el ambiente representado. El cuaderno muestra los encuentros previstos. Las frecuencias son una adaptación jugable de hábitats, no un censo estatal. Ver [selección, cantidades y fuentes](FAUNA.md). Pruebas: `node tests/regional-fauna.cjs`.
 
 Los controles de movimiento, cuaderno, guardado y pantalla completa se ocultan en el menú y en los resúmenes de derrota o victoria, también en modo inmersivo. En pausa o al consultar el cuaderno se ocultan movimiento y herramientas; el botón para salir de pantalla completa permanece disponible. Los binoculares no tienen control ni indicador manual: su uso es automático.
+
+## Dificultad progresiva
+
+Las 32 etapas conservan 180 segundos y una ruta principal por el suelo. Desde la primera etapa hay rutas opcionales verdes, a 88 píxeles sobre plataformas existentes, con cinco monedas adicionales por ruta. Se amplían de una a tres rutas durante las primeras nueve etapas.
+
+Desde el nivel 5 aparecen plataformas azules que se desplazan horizontalmente y transportan al personaje. Su velocidad aumenta gradualmente y su cantidad sube de una a tres en los niveles 5, 13 y 21. Desde el nivel 9 aparecen plataformas naranjas que se agrietan al pisarlas: una barra y una vibración anuncian su desaparición. El aviso disminuye de 1.5 a 0.925 segundos hasta el nivel 32. Se incorporan más en los niveles 17 y 25. Reaparecen después de 3 segundos, esperando si el personaje ocupa su espacio.
+
+Las plataformas especiales permiten subir a través de ellas y aterrizar encima. Sus movimientos y cuentas regresivas se detienen durante la pausa y el cuaderno, y se conservan al guardar. Las partidas anteriores mantienen su geometría hasta avanzar al siguiente nivel. Esta entrega implementa plataformas y rutas; viento, obstáculos ambientales y puntos de control quedan para otra iteración.
+
+Validación: `node tests/difficulty.cjs` comprueba progresión, guardado, transporte, caída, reaparición y acceso a todas las rutas con Leo y Gus a 30, 60 y 120 FPS.
