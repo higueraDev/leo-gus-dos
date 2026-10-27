@@ -9,6 +9,11 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../game.js'),'utf8'),sandbox);
 vm.runInContext(`
 muted=true;let checks=0;
+function unlockTestChest(){
+ journalEntry('flora','Flora',3);journalEntry('landscape','Paisaje',3);
+ assert.ok(purchaseBlock(platforms.find(p=>p.item==='key')));
+ player.x=world-280;player.y=416-player.h;updateChest();assert.ok(chestState().open);
+}
 function check(ok,label){assert.ok(ok,label);checks++;}
 function resetRun(){expedition=freshExpedition();hero='leo';level=1;player=null;setup();state='play';lives=3;coins=0;Object.keys(keys).forEach(k=>keys[k]=false);}
 resetRun();recordTravel(1060);check(expeditionKm()===1,'1000 pixels count as one adventure km');recordTravel(500);recordTravel(1060);check(expeditionKm()===1,'backtracking does not inflate distance');player.x=1060;die();recordTravel(player.x);check(expeditionKm()===1,'respawn does not add distance');
@@ -24,14 +29,14 @@ localStorage.removeItem(RECORDS_KEY);lives=1;player.star=0;player.inv=0;hurt();l
 check(records[0].expedition.earnedCoins===35&&records[0].expedition.species.length===2,'saved result includes income and unique species');
 check(document.querySelector('#expedition-summary').hidden===false&&document.querySelector('#result-badge').hidden,'loss shows summary without national award');
 finish(false);check(readRecords().length===1,'ending is idempotent');begin();check(readRecords().length===1&&expeditionKm()===0&&expedition.species.length===0&&coins===0,'new game clears run but preserves records');
-localStorage.removeItem(RECORDS_KEY);resetRun();level=32;setup();state='play';captureFlag();update(2.7);check(readRecords()[0].won&&document.querySelector('#result-badge').hidden,'finishing only final stage cannot claim all 32');
+localStorage.removeItem(RECORDS_KEY);resetRun();level=32;setup();state='play';unlockTestChest();captureFlag();update(2.7);check(readRecords()[0].won&&document.querySelector('#result-badge').hidden,'finishing only final stage cannot claim all 32');
 localStorage.removeItem(RECORDS_KEY);resetRun();expedition.species=Object.keys(SPECIES_NAMES);
-for(let stage=1;stage<=32;stage++){level=stage;player=null;setup();state='play';player.x=world-159;captureFlag();update(2.7);}
+for(let stage=1;stage<=32;stage++){level=stage;player=null;setup();state='play';unlockTestChest();player.x=world-159;captureFlag();update(2.7);}
 records=readRecords();const fullDistance=REGIONS.reduce((sum,r,index)=>sum+levelLength(index+1)-219,0)/1000;
 check(records.length===1&&records[0].won&&records[0].expedition.completedRegions.length===32,'full journey saved with all entities');
 check(Math.abs(records[0].km-fullDistance)<.001&&records[0].expedition.species.length===Object.keys(SPECIES_NAMES).length,'full distance and distinct species saved');
 check(!document.querySelector('#result-badge').hidden&&document.querySelector('#result-recognition').textContent.includes('flora y fauna'),'full journey receives ecological recognition');
-const allEarned=records[0].expedition.earnedCoins;check(allEarned>0&&allEarned===records[0].balance,'flag rewards count as income');
+const allEarned=records[0].expedition.earnedCoins;check(allEarned>0&&allEarned===records[0].balance+records[0].expedition.spentCoins,'flag rewards count as income');
 resetRun();coins=12;enemies.forEach(e=>e.observed=true);saveGame(false);const old=readSave();old.version=3;delete old.expedition;localStorage.setItem(SAVE_KEY,JSON.stringify(old));continueGame();check(expedition.partial&&expedition.earnedCoins===12&&new Set(expedition.species).size===expedition.species.length,'legacy statistics marked partial and deduplicated');
 for(let i=0;i<22;i++){resetRun();recordTravel(160+i);finish(false);}check(readRecords().length===20,'history retains last twenty expeditions');
 localStorage.setItem(RECORDS_KEY,'invalid');check(readRecords().length===0,'corrupt history handled');

@@ -9,6 +9,11 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../game.js'),'utf8'),sandbox);
 vm.runInContext(`
 muted=true;let checks=0;
+function unlockTestChest(){
+ journalEntry('flora','Flora',3);journalEntry('landscape','Paisaje',3);
+ assert.ok(purchaseBlock(platforms.find(p=>p.item==='key')));
+ player.x=world-280;player.y=416-player.h;updateChest();assert.ok(chestState().open);
+}
 function check(ok,label){assert.ok(ok,label);checks++;}
 check(REGIONS.length===32&&new Set(REGIONS.map(r=>r.id)).size===32,'32 unique entities');
 check(REGIONS[0].id==='bcs'&&REGIONS[31].id==='qroo','peninsula-to-Caribbean journey');
@@ -17,18 +22,18 @@ for(let i=1;i<REGIONS.length;i++){
  const a=REGIONS[i-1].id,b=REGIONS[i].id;check((borders[a]||[]).includes(b)||(borders[b]||[]).includes(a),'neighboring transition '+a+' -> '+b);
 }
 for(const selected of ['leo','gus'])for(let stage=1;stage<=REGIONS.length;stage++){
- hero=selected;level=stage;player=null;setup();state='play';lives=3;coins=50;
+ expedition=freshExpedition();hero=selected;level=stage;player=null;setup();state='play';lives=3;coins=50;
  check(enemies.length>0&&enemies.every(e=>e.kind==='turtle'||region().fauna.includes(e.kind)),'valid regional fauna');
  check(world>=3860&&world<=4220&&platforms.every(p=>p.x+p.w<=world),'bounded full level geometry');
  check(STATE_MUSIC[region().music]&&region().landmark&&region().biome,'complete environment configuration');
  check(saveGame(false)&&validSave(readSave()),'save at stage '+stage);
  continueGame();check(level===stage&&readSave().regionId===region().id,'resume correct entity');
- const earned=coins;player.big=true;player.cape=true;player.star=5;player.y=220;captureFlag();check(state==='goal'&&coins>earned,'stage pays coin bonus');
+ const earned=coins;player.big=true;player.cape=true;player.star=5;unlockTestChest();player.y=220;captureFlag();check(state==='goal'&&coins>earned,'stage pays coin bonus');
  update(2.7);
  check(stage===REGIONS.length?state==='end':state==='play'&&level===stage+1&&player.big&&player.cape&&timer===180,'advance or finish exactly at final entity');
 }
 for(const selected of ['leo','gus'])for(let stage=1;stage<=REGIONS.length;stage++){
- hero=selected;level=stage;player=null;setup();state='play';enemies=[];gold=[];notice=null;
+ expedition=freshExpedition();hero=selected;level=stage;player=null;setup();state='play';enemies=[];gold=[];notice=null;
  check(stageGaps().every(([a,b])=>b-a<=140),'crossable gap widths');
  const target=stagePlatform(0);player.x=target.x-160;player.y=416-player.h;player.on=true;player.inv=0;
  Object.keys(keys).forEach(k=>keys[k]=false);let landed=false;

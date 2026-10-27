@@ -108,3 +108,13 @@ Desde el nivel 5 aparecen plataformas azules que se desplazan horizontalmente y 
 Las plataformas especiales permiten subir a través de ellas y aterrizar encima. Sus movimientos y cuentas regresivas se detienen durante la pausa y el cuaderno, y se conservan al guardar. Las partidas anteriores mantienen su geometría hasta avanzar al siguiente nivel. Esta entrega implementa plataformas y rutas; viento, obstáculos ambientales y puntos de control quedan para otra iteración.
 
 Validación: `node tests/difficulty.cjs` comprueba progresión, guardado, transporte, caída, reaparición y acceso a todas las rutas con Leo y Gus a 30, 60 y 120 FPS.
+
+## Cofre de exploración al final de cada nivel
+
+Para avanzar hay que comprar binoculares (12 monedas, conservados durante la expedición), inspeccionar FLORA y VISTA sobre el suelo y comprar la llave del nivel (6 monedas) golpeando el bloque dorado situado después de las inspecciones y antes del cofre. Cada inspección entrega 3 monedas que se reservan para la llave; otras compras solo usan el saldo restante. Tener monedas o registrar animales no sustituye las dos inspecciones.
+
+El indicador superior muestra FLORA, VISTA, LLAVE y la reserva. Acercarse al cofre con la llave lo abre automáticamente, consume la llave y entrega 12 monedas una sola vez. Entonces se puede llegar a la bandera. La salida permanece cerrada aunque se intente pasar saltando o usando parapente. Cada entidad tiene sus propios requisitos. Las inspecciones, la llave y el cofre abierto sobreviven a la pérdida de una vida y al guardado.
+
+Las partidas anteriores reciben el nuevo bloque de llave al continuar; conservan su cuaderno y, si ya habían gastado la recompensa de las inspecciones, se repone únicamente el importe que falte para la reserva. Las nuevas partidas no reciben monedas adicionales.
+
+Validación: `node tests/chests.cjs` cubre las 32 entidades con Leo y Gus a 30, 60 y 120 FPS, requisitos, reservas, compra, bloqueo aéreo, recompensa única, pérdida de vida, guardado, migración y cambio de nivel.
