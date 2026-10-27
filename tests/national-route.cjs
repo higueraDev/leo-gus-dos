@@ -30,7 +30,7 @@ for(const selected of ['leo','gus'])for(let stage=1;stage<=REGIONS.length;stage+
  continueGame();check(level===stage&&readSave().regionId===region().id,'resume correct entity');
  const earned=coins;player.big=true;player.cape=true;player.star=5;unlockTestChest();player.y=220;captureFlag();check(state==='goal'&&coins>earned,'stage pays coin bonus');
  update(2.7);
- check(stage===REGIONS.length?state==='end':state==='play'&&level===stage+1&&player.big&&player.cape&&timer===180,'advance or finish exactly at final entity');
+ check(stage===REGIONS.length?state==='end':state==='play'&&level===stage+1&&player.big&&!player.cape&&!expedition.binoculars&&timer===180,'advance or finish exactly at final entity');
 }
 for(const selected of ['leo','gus'])for(let stage=1;stage<=REGIONS.length;stage++){
  expedition=freshExpedition();hero=selected;level=stage;player=null;setup();state='play';enemies=[];gold=[];notice=null;
